@@ -26,17 +26,18 @@ class NLPProcessor:
             },
             "classification": {
                 "classify", "categorize", "label", "name", "determine",
-                "tell", "describe", "explain"
-            },
-            "segmentation": {
-                "segment", "separate", "divide", "partition", "split"
-            },
-            "ocr": {
-                "read", "extract", "parse", "scan"
-            },
-            "face": {
-                "face", "facial"
+                "what", "tell", "describe", "explain", "identify"
             }
+        }
+        
+        # Object synonyms and normalizations
+        self.object_synonyms = {
+            "person": {"person", "people", "human", "humans", "pedestrian", "pedestrians", 
+                      "individual", "individuals", "man", "men", "woman", "women"},
+            "cat": {"cat", "cats", "kitten", "kittens"},
+            "dog": {"dog", "dogs", "puppy", "puppies"},
+            "car": {"car", "cars", "vehicle", "vehicles", "automobile"},
+            "truck": {"truck", "trucks"}
         }
 
     def preprocess_query(self, query: str) -> str:
@@ -48,15 +49,42 @@ class NLPProcessor:
         )
         return query
 
+    def normalize_object_name(self, name: str) -> str:
+        """Normalize object names (e.g., plurals, synonyms)"""
+        name = name.lower()
+        
+        # Remove plural 's'
+        if name.endswith('s'):
+            singular = name[:-1]
+            # Check if singular form is in any synonym set
+            for main_term, synonyms in self.object_synonyms.items():
+                if singular in synonyms:
+                    return main_term
+        
+        # Check direct matches and synonyms
+        for main_term, synonyms in self.object_synonyms.items():
+            if name in synonyms:
+                return main_term
+        
+        return name
+    
     def extract_task_type(self, doc: Doc) -> Optional[str]:
         """Extract the main task type from the parsed query"""
+        # Check for classification indicators
+        if any(token.text.lower() in ["what", "classify", "categorize"] 
+               for token in doc):
+            return "classification"
+        
+        # Check other task verbs
         for token in doc:
-            if token.pos_ == "VERB":
-                verb = token.lemma_.lower()
+            if token.pos_ in ["VERB", "NOUN"]:
+                word = token.lemma_.lower()
                 for task, verbs in self.task_verbs.items():
-                    if verb in verbs:
+                    if word in verbs:
                         return task
-        return None
+        
+        # Default to detection for object-focused queries
+        return "detection"
 
     def extract_target_objects(self, doc: Doc) -> List[str]:
         """Extract target objects from the parsed query using dependency parsing"""
@@ -75,7 +103,11 @@ class NLPProcessor:
                 if token.pos_ == "NOUN" and token.text.lower() not in self.filter_words:
                     target_objects.add(token.text.lower())
         
-        return list(target_objects)
+        # Normalize object names
+        normalized_objects = [self.normalize_object_name(obj) for obj in target_objects]
+        
+        return normalized_objects
+
 
     def parse_query(self, query: str) -> Tuple[Optional[str], List[str]]:
         """Parse the query to extract task type and target objects"""

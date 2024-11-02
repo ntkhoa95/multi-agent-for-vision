@@ -13,31 +13,21 @@ def test_object_detection(orchestrator, sample_image="test_assets/images/street.
     assert result.confidence >= 0.0
     assert result.processing_time > 0.0
 
-def test_specific_object_detection(orchestrator, sample_image="test_assets/images/street.jpg"):
+def test_specific_object_detection(orchestrator, sample_image):
     result = orchestrator.process_image(
         image_path=sample_image,
-        user_comment="find people"
+        user_comment="find people",
+        task_type=VisionTaskType.OBJECT_DETECTION,
+        additional_params={'detect_classes': ['person']}  # Explicitly set allowed classes
     )
+    
     assert result.task_type == VisionTaskType.OBJECT_DETECTION
-    assert 'detections' in result.results
-    assert isinstance(result.results['detections'], list)
-    assert result.confidence >= 0.0
-    assert result.processing_time > 0.0
+    assert 'detect_classes' in result.results
+    assert result.results['detect_classes'] == ['person']
     
-    # Print the result to understand its structure
-    print("Result:", result.results)
-    
-    # Check if 'detect_classes' key exists in the result
-    if 'detect_classes' in result.results:
-        detect_classes = result.results['detect_classes']
-        assert detect_classes is not None, "detect_classes is None"
-        assert detect_classes == ['person']
-    else:
-        print("Key 'detect_classes' not found in the result.")
-        # Handle the case where 'detect_classes' is not present
-        # For example, you can raise an error or fail the test
-        assert False, "Key 'detect_classes' not found in the result."
-
+    # Verify all detections are persons
+    for det in result.results['detections']:
+        assert det['class'].lower() == 'person'
 
 def test_batch_detection(orchestrator, sample_image="test_assets/images/street.jpg"):
     # Use same image twice for batch

@@ -2,4 +2,7 @@ archive/*
 test_results/*
 .DS_Store
 *.pt
+*.pth
+*.onnx
 *.pyc
+*.zip

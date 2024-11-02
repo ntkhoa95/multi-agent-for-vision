@@ -70,7 +70,7 @@ class VisionOrchestrator:
                      additional_params: Optional[Dict] = None,
                      user_comment: str = "") -> VideoDetectionResult:
         """Process video file"""
-        task_type, additional_params = self.router.determine_task_type(user_comment)
+        task_type, _ = self.router.determine_task_type(user_comment)
         
         vision_input = VisionInput(
             image=video_path,
@@ -90,5 +90,6 @@ class VisionOrchestrator:
             vision_input=vision_input,
             output_path=output_path,
             start_time=start_time,
-            end_time=end_time
+            end_time=end_time,
+            additional_params=vision_input.additional_params,
         )

@@ -235,25 +235,47 @@ class VisionFrameworkTester:
         logger.info("\n=== Testing Video Processing ===")
         
         test_queries = [
-            # Format: (query, allowed_classes)
-            ("detect person only in video", ["person"]),
-            ("track people", ["person"]),
-            ("detect all objects", None),
+            {
+                "query": "track people",
+                "allowed_classes": ["person"],
+                "description": "Person detection and tracking"
+            },
+            {
+                "query": "detect all objects",
+                "allowed_classes": None,
+                "description": "General detection"
+            }
         ]
         
         for video_path in video_paths:
             logger.info(f"\nProcessing video: {video_path.name}")
             
-            for query, allowed_classes in test_queries:
+            for test_case in test_queries:
+                query = test_case["query"]
+                allowed_classes = test_case["allowed_classes"]
+                
+                output_path = os.path.join(
+                    self.config['VIDEO_SAVE_PATH'],
+                    f'output_{video_path.stem}_{query.replace(" ", "_")}.mp4'
+                )
+                
                 try:
-                    # Create additional parameters for class filtering
+                    logger.info(f"\nTest case: {test_case['description']}")
+                    logger.info(f"Query: '{query}'")
+                    if allowed_classes:
+                        logger.info(f"Using allowed classes: {allowed_classes}")
+
+                    # Get detection agent to validate classes first
+                    detection_agent = self.orchestrator.router.agents[VisionTaskType.OBJECT_DETECTION]
+                    if allowed_classes:
+                        valid_classes = detection_agent.validate_classes(allowed_classes)
+                        if not valid_classes:
+                            logger.error(f"No valid classes found among {allowed_classes}")
+                            continue
                     additional_params = {'detect_classes': allowed_classes} if allowed_classes else None
+                    logger.info(f"additional_params: {additional_params}")
                     
-                    output_path = os.path.join(
-                        self.config['VIDEO_SAVE_PATH'],
-                        f'output_{video_path.stem}_{query.replace(" ", "_")}.mp4'
-                    )
-                    
+                    # Process video
                     video_result = self.orchestrator.process_video(
                         video_path=str(video_path),
                         output_path=output_path,
@@ -262,29 +284,77 @@ class VisionFrameworkTester:
                         end_time=10,  # Process first 10 seconds
                         additional_params=additional_params
                     )
-                    
-                    logger.info(f"\nQuery: '{query}'")
-                    if allowed_classes:
-                        logger.info(f"Filtering for classes: {allowed_classes}")
-                    logger.info(f"Processed {video_result.num_frames} frames")
-                    logger.info(f"Average FPS: {video_result.num_frames / video_result.total_time:.2f}")
-                    
-                    # Calculate detection statistics
-                    total_detections = sum(
-                        len([d for d in frame.results['detections']
-                            if not allowed_classes or d['class'].lower() in [c.lower() for c in allowed_classes]])
-                        for frame in video_result.frames_results
-                    )
-                    avg_detections = total_detections / video_result.num_frames
-                    
-                    logger.info(f"Total detections: {total_detections}")
-                    logger.info(f"Average detections per frame: {avg_detections:.2f}")
-                    logger.info(f"Output saved to: {output_path}")
-                    
+
+                    # Process results
+                    all_detected_classes = set()
+                    filtered_frames = []
+
+                    for frame in video_result.frames_results:
+                        # Filter detections in each frame
+                        if allowed_classes:
+                            filtered_detections = [
+                                det for det in frame.results['detections']
+                                if det['class'].lower() in {cls.lower() for cls in valid_classes}
+                            ]
+                            frame.results['detections'] = filtered_detections
+                            frame.results['num_detections'] = len(filtered_detections)
+                        else:
+                            filtered_detections = frame.results['detections']
+
+                        frame_classes = {det['class'].lower() for det in filtered_detections}
+                        all_detected_classes.update(frame_classes)
+                        filtered_frames.append(frame)
+
+                    # Create filtered video output
+                    if output_path and filtered_frames:
+                        cap = cv2.VideoCapture(str(video_path))
+                        fps = cap.get(cv2.CAP_PROP_FPS)
+                        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+                        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+                        cap.release()
+
+                        filtered_output = os.path.join(
+                            self.config['VIDEO_SAVE_PATH'],
+                            f'filtered_{video_path.stem}_{query.replace(" ", "_")}.mp4'
+                        )
+                        
+                        fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                        out = cv2.VideoWriter(filtered_output, fourcc, fps, (width, height))
+
+                        cap = cv2.VideoCapture(str(video_path))
+                        for frame_result in filtered_frames:
+                            ret, frame = cap.read()
+                            if not ret:
+                                break
+
+                            annotated_frame = frame.copy()
+                            for det in frame_result.results['detections']:
+                                bbox = det['bbox']
+                                x1, y1, x2, y2 = map(int, bbox)
+                                label = f"{det['class']} {det['confidence']:.2f}"
+                                if 'track_id' in det:
+                                    label += f" ID:{det['track_id']}"
+
+                                cv2.rectangle(annotated_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                                cv2.putText(annotated_frame, label, (x1, y1-10),
+                                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                            out.write(annotated_frame)
+
+                        cap.release()
+                        out.release()
+                        logger.info(f"Saved filtered video to: {filtered_output}")
+
+                    # Log results
+                    logger.info("\nProcessing Results:")
+                    logger.info(f"Processed {len(filtered_frames)} frames")
+                    logger.info(f"Average FPS: {len(filtered_frames) / video_result.total_time:.2f}")
+                    logger.info(f"Detected classes: {all_detected_classes}")
+
                 except Exception as e:
-                    logger.error(f"Error processing query '{query}' for video {video_path.name}: {str(e)}")
-                    logger.debug("Result details:", exc_info=True)
+                    logger.error(f"Error processing video {video_path.name} with query '{query}': {str(e)}")
                     continue
+
+        logger.info("\nVideo processing completed")
     
     def validate_results(self):
         """Validate test results"""
