@@ -115,6 +115,8 @@ class NLPProcessor:
         doc = self.nlp(processed_query)
         task_type = self.extract_task_type(doc)
         target_objects = self.extract_target_objects(doc)
+        # logger.info("\n=== DEBUG PARSE QUERY ===")
+        # logger.info(f"doc - {doc} | target_objects - {target_objects}")
         return task_type, target_objects
 
     def validate_objects(self, objects: List[str], available_classes: Set[str]) -> List[str]:

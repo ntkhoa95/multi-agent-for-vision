@@ -219,9 +219,9 @@ class YOLODetectionAgent(BaseVisionAgent):
         
         # Setup class filtering with validation
         # Get specific classes to detect from additional parameters
-        if additional_params or 'detect_classes' in vision_input.additional_params:
+        if additional_params: #or 'detect_classes' in vision_input.additional_params:
             # Validate and normalize requested classes
-            requested_classes = vision_input.additional_params['detect_classes']
+            requested_classes = additional_params['detect_classes']
             allowed_classes = self.validate_classes(requested_classes)
             
             if not allowed_classes:
@@ -231,14 +231,7 @@ class YOLODetectionAgent(BaseVisionAgent):
             class_mapping = {name.lower(): idx for idx, name in self.model.names.items()}
             class_indices = [class_mapping[cls] for cls in allowed_classes]
             logger.info(f"Strict filtering for classes: {allowed_classes}")
-            
-            # # Configure model for class-specific detection
-            # self.model.overrides['conf'] = self.conf_threshold
-            # self.model.overrides['iou'] = self.iou_threshold
-            # self.model.overrides['classes'] = class_indices
-            # self.model.overrides['max_det'] = 50
-            # self.model.overrides['agnostic_nms'] = True
-
+        
         try:
             # Video setup
             cap = cv2.VideoCapture(video_path)
