@@ -1,0 +1,5 @@
+archive/*
+test_results/*
+.DS_Store
+*.pt
+*.pyc
