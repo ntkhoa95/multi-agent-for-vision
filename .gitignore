@@ -1,8 +1,3 @@
-archive/*
-test_results/*
-.DS_Store
-*.pt
-*.pth
-*.onnx
-*.pyc
-*.zip
+version https://git-lfs.github.com/spec/v1
+oid sha256:ad361a2a82f0db757f33e2205b5519e135c5308ca295eb0e435097e0c8becb7b
+size 100
