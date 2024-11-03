@@ -1,3 +1,12 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:ad361a2a82f0db757f33e2205b5519e135c5308ca295eb0e435097e0c8becb7b
-size 100
+archive/*
+test_results/*
+test_assest/*
+test_videos/*
+examples/output/*
+.DS_Store
+*.pt
+*.pth
+*.onnx
+*.pyc
+*.zip
+vision_framework.egg-info/*

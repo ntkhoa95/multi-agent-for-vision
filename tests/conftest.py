@@ -1,3 +1,38 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:adde9f04679f7df210fd4d9550f42261b732b414b49fcf2c52b541f779800bb8
-size 1936
+from pathlib import Path
+
+import pytest
+import torch
+
+from vision_framework import VisionOrchestrator
+
+
+@pytest.fixture(scope="session")
+def test_data_dir():
+    return Path(__file__).parent / "data"
+
+
+@pytest.fixture(scope="session")
+def test_images_dir(test_data_dir):
+    return test_data_dir / "images"
+
+
+@pytest.fixture(scope="session")
+def test_videos_dir(test_data_dir):
+    return test_data_dir / "videos"
+
+
+@pytest.fixture
+def config():
+    return {
+        "DEVICE": "cuda" if torch.cuda.is_available() else "cpu",
+        "BATCH_SIZE": 32,
+        "NUM_WORKERS": 4,
+        "YOLO_MODEL_NAME": "yolov8s.pt",
+        "MODEL_NAME": "mobilenetv3_large_100",
+        "MODEL_PRETRAINED": True,
+    }
+
+
+@pytest.fixture
+def orchestrator(config):
+    return VisionOrchestrator(config)

@@ -1,3 +1,29 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:9da692b0277f23faeca0ce4a2da56964c3b09836021787d8768400bf39013b4a
-size 306
+# setup.py
+from setuptools import find_packages, setup
+
+setup(
+    name="vision_framework",
+    version="0.1.0",
+    packages=find_packages(),
+    install_requires=[
+        "torch>=2.0.0",
+        "torchvision>=0.15.0",
+        "ultralytics>=8.0.0",
+        "timm>=0.9.2",
+        "spacy>=3.5.0",
+        "opencv-python>=4.8.0",
+        "numpy>=1.24.0",
+        "tqdm>=4.65.0",
+        "Pillow>=9.5.0",
+    ],
+    extras_require={
+        "dev": [
+            "pytest>=7.0.0",
+            "pytest-cov>=4.0.0",
+            "black>=22.0.0",
+            "isort>=5.0.0",
+            "flake8>=4.0.0",
+        ],
+    },
+    python_requires=">=3.8",
+)

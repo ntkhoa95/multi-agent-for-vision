@@ -1,5 +1,9 @@
 # Vision Framework
 
+[![CI](https://github.com/{username}/{repo}/actions/workflows/ci.yml/badge.svg)](https://github.com/{username}/{repo}/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/{username}/{repo}/branch/main/graph/badge.svg)](https://codecov.io/gh/{username}/{repo})
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 A flexible and extensible computer vision framework supporting multiple vision tasks with natural language queries.
 
 ## Features
@@ -105,40 +109,90 @@ config = {
 
 ```
 vision_framework/
-├── core/
-│   ├── types.py           # Core data types
-│   └── config.py          # Configuration handling
-├── agents/
-│   ├── base.py           # Base agent class
-│   ├── classification.py  # Classification agent
-│   └── detection.py      # Detection agent
-├── nlp/
-│   └── processor.py      # NLP processing
-├── utils/
-│   ├── image.py          # Image utilities
-│   └── video.py          # Video utilities
-└── router/
-    └── router.py         # Agent router
+├── setup.py                # Package setup and dependencies
+├── requirements.txt        # Project dependencies
+├── README.md               # Project documentation
+├── LICENSE                 # License file
+├── .gitignore              # Git ignore file
+│
+├── vision_framework/       # Main package directory
+│   ├── __init__.py         # Package initialization
+│   ├── config.py           # Configuration management
+│   ├── orchestrator.py     # Vision Orchestrator management
+│   │
+│   ├── core/               # Core functionality
+│   │   ├── __init__.py
+│   │   ├── types.py        # Data classes and type definitions
+│   │   └── exceptions.py   # Custom exceptions
+│   │
+│   ├── agents/             # Vision agents
+│   │   ├── __init__.py
+│   │   ├── base.py         # Base agent class
+│   │   ├── classification.py
+│   │   └── detection.py
+│   │
+│   ├── nlp/                # NLP processing
+│   │   ├── __init__.py
+│   │   └── processor.py
+│   │
+│   ├── router/             # Request routing
+│   │   ├── __init__.py
+│   │   └── router.py
+│   │
+│   └── utils/              # Utility functions
+│       ├── __init__.py
+│       ├── image.py
+│       ├── video.py
+│       └── logging.py
+│
+├── tests/                   # Test directory
+│   ├── __init__.py
+│   ├── conftest.py          # Pytest configuration and fixtures
+│   │
+│   ├── unit/               # Unit tests
+│   │   ├── __init__.py
+│   │   ├── test_base.py
+│   │   ├── test_classification.py
+│   │   ├── test_detection.py
+│   │   ├── test_nlp.py
+│   │   ├── test_router.py
+│   │   └── test_orchestrator.py
+│   │
+│   ├── integration/        # Integration tests
+│   │   ├── __init__.py
+│   │   ├── test_image.py
+│   │   └── test_video.py
+│   │
+│   └── data/               # Test data
+│       ├── images/         # Test images
+│       └── videos/         # Test videos
+│
+└── examples/               # Example scripts
+    ├── classification_example.py
+    ├── detection_example.py
+    └── video_processing_example.py
+```
+
+## Install package in development mode
+```
+pip install -e .
 ```
 
 ## Running Tests
 
 ```bash
 # Run all tests
-python -m pytest tests/
+pytest
+
+# Run specific test types
+pytest tests/unit
+pytest tests/integration
+
+# Run with coverage
+pytest --cov=vision_framework
 
 # Run specific test file
-python -m pytest tests/test_detection.py --log-cli-level=DEBUG
-
-python -m pytest tests/test_classification.py --log-cli-level=DEBUG
-
-python -m pytest tests/test_nlp.py --log-cli-level=DEBUG
-
-# Install test dependencies
-pip install pytest pytest-cov
-
-# Run tests with coverage report
-pytest --cov=vision_framework tests/
+pytest tests/unit/test_detection.py
 ```
 
 ## Requirements
