@@ -75,9 +75,7 @@ def test_process_image(mock_process_request, orchestrator):
         confidence=0.0,
         processing_time=0.1,
     )
-    result = orchestrator.process_image(
-        "tests/data/images/street.jpg", "detect objects"
-    )
+    result = orchestrator.process_image("tests/data/images/street.jpg", "detect objects")
     assert result.task_type == VisionTaskType.OBJECT_DETECTION
     assert "detections" in result.results
 

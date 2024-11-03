@@ -74,9 +74,7 @@ def test_process_image(agent):
     mock_image = np.zeros((640, 640, 3))
     mock_detections = MagicMock()
     mock_detections.boxes = [
-        MagicMock(
-            cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9)
-        )
+        MagicMock(cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9))
     ]
     mock_detections.names = {0: "person"}
     agent.model.predict = MagicMock(return_value=[mock_detections])
@@ -91,16 +89,12 @@ def test_process_image_with_detect_classes(agent):
     mock_image = np.zeros((640, 640, 3))
     mock_detections = MagicMock()
     mock_detections.boxes = [
-        MagicMock(
-            cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9)
-        )
+        MagicMock(cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9))
     ]
     mock_detections.names = {0: "person"}
     agent.model.predict = MagicMock(return_value=[mock_detections])
 
-    result = agent.process_image(
-        mock_image, detect_classes=["person"], user_comment="detect human"
-    )
+    result = agent.process_image(mock_image, detect_classes=["person"], user_comment="detect human")
     assert "detections" in result.results
     assert len(result.results["detections"]) == 1
     assert result.results["detections"][0]["class"] == "person"
@@ -109,9 +103,7 @@ def test_process_image_with_detect_classes(agent):
 def test_process_detections(agent):
     mock_detections = MagicMock()
     mock_detections.boxes = [
-        MagicMock(
-            cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9)
-        )
+        MagicMock(cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9))
     ]
     mock_detections.names = {0: "person"}
     results = [mock_detections]
@@ -135,9 +127,7 @@ def test_process(agent):
     mock_image = np.zeros((640, 640, 3))
     mock_detections = MagicMock()
     mock_detections.boxes = [
-        MagicMock(
-            cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9)
-        )
+        MagicMock(cls=0, xyxy=[torch.tensor([50, 50, 100, 100])], conf=torch.tensor(0.9))
     ]
     mock_detections.names = {0: "person"}
     agent.model.predict = MagicMock(return_value=[mock_detections])
@@ -288,9 +278,9 @@ def test_process_video_frame_range(agent):
 def test_process_video_with_tracking(mock_time, mock_video_capture, agent):
     mock_cap = MagicMock()
     mock_cap.isOpened.return_value = True
-    mock_cap.read.side_effect = [
-        (True, np.zeros((640, 640, 3), dtype=np.uint8))
-    ] * 10 + [(False, None)]
+    mock_cap.read.side_effect = [(True, np.zeros((640, 640, 3), dtype=np.uint8))] * 10 + [
+        (False, None)
+    ]
     mock_cap.get.side_effect = lambda x: {
         cv2.CAP_PROP_FPS: 30,
         cv2.CAP_PROP_FRAME_WIDTH: 640,
@@ -333,9 +323,7 @@ def test_visualize_detections(agent):
 
 def test_visualize_detections_invalid_bbox(agent, caplog):
     mock_image = np.zeros((640, 640, 3), dtype=np.uint8)
-    detections = [
-        {"class": "person", "bbox": [50, 50], "confidence": 0.9}  # Invalid bbox
-    ]
+    detections = [{"class": "person", "bbox": [50, 50], "confidence": 0.9}]  # Invalid bbox
     annotated_image = agent.visualize_detections(mock_image, detections)
     assert isinstance(annotated_image, np.ndarray)
     assert annotated_image.shape[0] > 0 and annotated_image.shape[1] > 0

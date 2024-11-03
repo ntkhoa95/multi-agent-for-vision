@@ -1,12 +1,12 @@
+from .core.config import DEFAULT_CONFIG
 from .core.types import (
-    VisionTaskType,
+    BatchDetectionResult,
+    VideoDetectionResult,
     VisionInput,
     VisionOutput,
-    BatchDetectionResult,
-    VideoDetectionResult
+    VisionTaskType,
 )
 from .orchestrator import VisionOrchestrator
-from .core.config import DEFAULT_CONFIG
 from .utils.logging import setup_logging
 
 __version__ = "1.0.0"

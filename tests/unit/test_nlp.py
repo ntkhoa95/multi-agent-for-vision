@@ -31,9 +31,7 @@ def test_agent_registration(orchestrator):
 def test_process_image(orchestrator):
     """Test processing a single image with classification."""
     # Mock the classification agent's process function
-    classification_agent = orchestrator.router.agents[
-        VisionTaskType.IMAGE_CLASSIFICATION
-    ]
+    classification_agent = orchestrator.router.agents[VisionTaskType.IMAGE_CLASSIFICATION]
     classification_agent.process = MagicMock(return_value="mocked_output")
 
     result = orchestrator.process_image(
@@ -71,9 +69,7 @@ def test_process_batch(orchestrator):
 def test_process_batch_no_batch_support(orchestrator):
     """Test batch processing when agent does not support it."""
     # Mock a classification agent without batch support
-    classification_agent = orchestrator.router.agents[
-        VisionTaskType.IMAGE_CLASSIFICATION
-    ]
+    classification_agent = orchestrator.router.agents[VisionTaskType.IMAGE_CLASSIFICATION]
     classification_agent.process = MagicMock(return_value="mocked_single_output")
 
     result = orchestrator.process_batch(
@@ -98,14 +94,10 @@ def test_process_video(orchestrator):
 
 def test_process_video_no_video_support(orchestrator):
     """Test video processing when agent does not support video processing."""
-    classification_agent = orchestrator.router.agents[
-        VisionTaskType.IMAGE_CLASSIFICATION
-    ]
+    classification_agent = orchestrator.router.agents[VisionTaskType.IMAGE_CLASSIFICATION]
 
     with pytest.raises(ValueError) as excinfo:
-        orchestrator.process_video(
-            "tests/data/videos/crosswalk.avi", user_comment="classify video"
-        )
+        orchestrator.process_video("tests/data/videos/crosswalk.avi", user_comment="classify video")
     assert "does not support video processing" in str(excinfo.value)
 
 
@@ -165,9 +157,7 @@ def test_object_extraction(nlp_processor):
 
     for query, expected_objects in queries.items():
         _, objects = nlp_processor.parse_query(query)
-        normalized_objects = {
-            nlp_processor.normalize_object_name(obj) for obj in objects
-        }
+        normalized_objects = {nlp_processor.normalize_object_name(obj) for obj in objects}
 
         if expected_objects is None:
             # If None was expected, verify the objects set is empty

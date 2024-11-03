@@ -34,9 +34,7 @@ class TestVideoProperties(unittest.TestCase):
 
     def test_get_video_properties(self):
         """Test retrieving properties of a valid video."""
-        self.assertTrue(
-            os.path.exists(self.test_video_path), "Test video file does not exist."
-        )
+        self.assertTrue(os.path.exists(self.test_video_path), "Test video file does not exist.")
         fps, total_frames, width, height = get_video_properties(self.test_video_path)
 
         self.assertEqual(fps, 20.0, "FPS should be 20.0")
@@ -49,9 +47,7 @@ class TestVideoProperties(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             get_video_properties("invalid_path.mp4")
 
-        self.assertEqual(
-            str(context.exception), "Error opening video file: invalid_path.mp4"
-        )
+        self.assertEqual(str(context.exception), "Error opening video file: invalid_path.mp4")
 
     def test_empty_video_file(self):
         """Test handling of an empty video file."""

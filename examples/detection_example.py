@@ -54,19 +54,13 @@ def main():
         for query, target_classes in detection_queries:
             try:
                 # Process image
-                result = orchestrator.process_image(
-                    image_path=image_path, user_comment=query
-                )
+                result = orchestrator.process_image(image_path=image_path, user_comment=query)
 
                 # Get detection agent for visualization
-                detection_agent = orchestrator.router.agents[
-                    VisionTaskType.OBJECT_DETECTION
-                ]
+                detection_agent = orchestrator.router.agents[VisionTaskType.OBJECT_DETECTION]
 
                 # Save visualization
-                output_name = (
-                    f"detection_{Path(image_path).stem}_{query.replace(' ', '_')}.jpg"
-                )
+                output_name = f"detection_{Path(image_path).stem}_{query.replace(' ', '_')}.jpg"
                 output_path = f"examples/output/{output_name}"
 
                 detection_agent.visualize_detections(

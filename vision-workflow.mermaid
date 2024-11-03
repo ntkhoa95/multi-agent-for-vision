@@ -8,7 +8,7 @@ flowchart TB
     subgraph Orchestrator
         C --> D[VisionOrchestrator]
         D --> E[AgentRouter]
-        
+
         subgraph Router Logic
             E --> F{Task Type\nSpecified?}
             F -->|Yes| H[Get Registered Agent]
