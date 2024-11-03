@@ -1,9 +1,8 @@
+# tests/conftest.py
+import os
 from pathlib import Path
 
 import pytest
-import torch
-
-from vision_framework import VisionOrchestrator
 
 
 @pytest.fixture(scope="session")
@@ -21,18 +20,18 @@ def test_videos_dir(test_data_dir):
     return test_data_dir / "videos"
 
 
-@pytest.fixture
-def config():
-    return {
-        "DEVICE": "cuda" if torch.cuda.is_available() else "cpu",
-        "BATCH_SIZE": 32,
-        "NUM_WORKERS": 4,
-        "YOLO_MODEL_NAME": "yolov8s.pt",
-        "MODEL_NAME": "mobilenetv3_large_100",
-        "MODEL_PRETRAINED": True,
-    }
+@pytest.fixture(scope="session")
+def sample_image_path(test_images_dir):
+    return test_images_dir / "street.jpg"
 
 
-@pytest.fixture
-def orchestrator(config):
-    return VisionOrchestrator(config)
+@pytest.fixture(scope="session")
+def sample_video_path(test_videos_dir):
+    return test_videos_dir / "crosswalk.avi"
+
+
+@pytest.fixture(autouse=True)
+def setup_test_dirs(test_images_dir, test_videos_dir):
+    """Ensure test directories exist."""
+    test_images_dir.mkdir(parents=True, exist_ok=True)
+    test_videos_dir.mkdir(parents=True, exist_ok=True)

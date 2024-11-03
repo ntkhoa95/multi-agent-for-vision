@@ -62,3 +62,9 @@ vision_framework/_version.py
 # OS specific
 .DS_Store
 Thumbs.db
+
+# Test data
+tests/data/images/*
+!tests/data/images/.gitkeep
+tests/data/videos/*
+!tests/data/videos/.gitkeep
