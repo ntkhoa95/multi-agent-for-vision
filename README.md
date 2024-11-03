@@ -1,111 +1,142 @@
-# Vision Framework
+# Vision Framework: Multi-Agent System for Computer Vision Tasks
 
 [![CI](https://github.com/{username}/{repo}/actions/workflows/ci.yml/badge.svg)](https://github.com/{username}/{repo}/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/{username}/{repo}/branch/main/graph/badge.svg)](https://codecov.io/gh/{username}/{repo})
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A flexible and extensible computer vision framework supporting multiple vision tasks with natural language queries.
+A flexible and extensible multi-agent framework for computer vision tasks, supporting classification, object detection, and more. This framework provides a modular approach to handling various vision tasks through specialized agents.
 
-## Features
+## 🌟 Features
 
-- Multiple vision tasks support:
-  - Object Detection (YOLOv8)
-  - Image Classification (MobileNetV3)
-  - Natural language query understanding
-  - Object tracking in videos
-  - Batch processing capability
+- **Multi-Agent Architecture**: Specialized agents for different vision tasks
+  - Classification Agent (MobileNetV3)
+  - Object Detection Agent (YOLOv8)
+  - Easily extensible for new vision tasks
 
-- Natural Language Processing:
-  - Query understanding and task determination
-  - Object extraction from queries
-  - Dynamic class filtering
+- **Natural Language Interface**: Process vision tasks using natural language queries
+  - "What's in this image?"
+  - "Detect objects in this scene"
+  - "Classify this image"
 
-- Video Processing:
-  - Real-time object detection and tracking
-  - Progress visualization
-  - Frame-by-frame processing
-  - Output video generation
+- **Intelligent Task Routing**: Automatically determines the most appropriate agent based on user queries
 
-## Installation
+- **Modern Deep Learning Models**:
+  - MobileNetV3 for efficient classification
+  - YOLOv8 for state-of-the-art object detection
+  - Support for model customization and extension
 
-1. Clone the repository:
+- **Comprehensive Output Format**:
+  - Detailed predictions with confidence scores
+  - Processing time metrics
+  - Model configuration details
+
+## 🚀 Quick Start
+
+### Installation
+
 ```bash
-git clone https://github.com/yourusername/vision-framework.git
-cd vision-framework
-```
+# Clone the repository
+git clone https://github.com/ntkhoa95/multi-agent-for-vision.git
+cd multi-agent-for-vision
 
-2. Install dependencies:
-```bash
+# Install dependencies
 pip install -r requirements.txt
 python -m spacy download en_core_web_sm
+
+# Install in development mode
+pip install -e .
 ```
 
-## Usage
+## 🗂️ Available Examples
 
-### Basic Usage
+### 1. Classification Example (`classification_example.py`)
+
+Demonstrates image classification capabilities using MobileNetV3.
+
+```python
+# Run the classification example
+python examples/classification_example.py
+```
+
+#### Features:
+- Image classification with detailed class predictions
+- Confidence scores for top-5 predictions
+- Model configuration display
+- Processing time metrics
+
+#### Example Output:
+```
+Processing image: tests/data/images/dog.jpg
+Query: What is in this image?
+Task Type: VisionTaskType.IMAGE_CLASSIFICATION
+Classification Results:
+  Golden retriever: 0.856
+  Labrador retriever: 0.125
+  Irish setter: 0.012
+  Chesapeake Bay retriever: 0.004
+  Greater Swiss Mountain dog: 0.003
+
+Model Configuration:
+  Model: mobilenetv3_large_100
+  Input size: (3, 224, 224)
+  Interpolation: bicubic
+  Mean: (0.485, 0.456, 0.406)
+  Std: (0.229, 0.224, 0.225)
+Processing time: 0.064 seconds
+```
+
+### 2. Object Detection Example (`detection_example.py`)
+
+Demonstrates object detection capabilities using YOLOv8.
+
+```python
+# Run the detection example
+python examples/detection_example.py
+```
+
+#### Features:
+- Multiple object detection
+- Bounding box coordinates
+- Class predictions with confidence scores
+- Processing time metrics
+
+### 3. Video Processing Example (`video_processing_example.py`)
+
+Shows how to process video inputs for both classification and detection tasks.
+
+```python
+# Run the video processing example
+python examples/video_processing_example.py
+```
+
+## Basic Usage
 
 ```python
 from vision_framework import VisionOrchestrator
+from vision_framework.core.types import VisionTaskType
 
-# Initialize framework
+# Initialize the framework
 config = {
     'DEVICE': 'cuda',  # or 'cpu'
-    'YOLO_MODEL_NAME': 'yolov8s.pt',
     'MODEL_NAME': 'mobilenetv3_large_100',
+    'MODEL_PRETRAINED': True
 }
 orchestrator = VisionOrchestrator(config)
 
-# Process single image
+# Process an image
 result = orchestrator.process_image(
-    image_path="images/test.jpg",
-    user_comment="detect cats and dogs"
+    image_path="path/to/image.jpg",
+    user_comment="What is in this image?"
 )
 
-# Process video
-result = orchestrator.process_video(
-    video_path="videos/test.mp4",
-    user_comment="find people and cars",
-    output_path="results/output.mp4"
-)
+# Print results
+print(f"Task Type: {result.task_type}")
+print(f"Confidence: {result.confidence}")
+print("Predictions:", result.results)
 ```
 
-### Natural Language Queries
-
-Examples of supported queries:
-- "detect cats and dogs in this image"
-- "find all people in the video"
-- "classify this image"
-- "locate cars and trucks"
-- "find pedestrians crossing the street"
-
-### Batch Processing
-
-```python
-# Process multiple images
-results = orchestrator.process_batch(
-    image_paths=["image1.jpg", "image2.jpg"],
-    user_comment="detect objects",
-)
-```
-
-## Configuration
-
-Key configuration options:
-```python
-config = {
-    'DEVICE': 'cuda',  # or 'cpu'
-    'BATCH_SIZE': 32,
-    'NUM_WORKERS': 4,
-    'YOLO_MODEL_NAME': 'yolov8s.pt',
-    'YOLO_CONFIDENCE_THRESHOLD': 0.25,
-    'YOLO_IOU_THRESHOLD': 0.45,
-    'MODEL_NAME': 'mobilenetv3_large_100',
-    'MODEL_PRETRAINED': True,
-    'ENABLE_TRACK': True,
-}
-```
-
-## Project Structure
+## 🏗️ Architecture
 
 ```
 vision_framework/
@@ -173,40 +204,90 @@ vision_framework/
     └── video_processing_example.py
 ```
 
-## Install package in development mode
-```
-pip install -e .
+### Components
+
+1. **Vision Orchestrator**: Central component managing the interaction between agents
+2. **Agents**: Specialized modules for specific vision tasks
+3. **Router**: Determines appropriate agent based on user queries
+4. **NLP Processor**: Interprets natural language queries
+
+## 🔧 Configuration
+
+Key configuration options:
+
+```python
+config = {
+    'DEVICE': 'cuda',                    # Device for inference
+    'MODEL_NAME': 'mobilenetv3_large_100', # Classification model
+    'MODEL_PRETRAINED': True,            # Use pretrained weights
+    'BATCH_SIZE': 1,                     # Batch size for inference
+    'NUM_WORKERS': 0,                    # Workers for data loading
+    'YOLO_MODEL_NAME': 'yolov8s.pt',     # Detection model
+    'YOLO_CONFIDENCE_THRESHOLD': 0.25,    # Detection confidence
+    'YOLO_IOU_THRESHOLD': 0.45,          # Detection IOU threshold
+}
 ```
 
-## Running Tests
+## 📊 Supported Tasks
+
+1. **Image Classification**
+   - Identifies main subjects in images
+   - Returns top-5 predictions with confidence scores
+   - Supports ImageNet classes
+
+2. **Object Detection**
+   - Locates and identifies multiple objects
+   - Provides bounding boxes and confidence scores
+   - Supports COCO classes
+
+## 🛠️ Development
+
+### Setting up development environment
 
 ```bash
-# Run all tests
-pytest
+# Install development dependencies
+pip install -r requirements-dev.txt
 
-# Run specific test types
-pytest tests/unit
-pytest tests/integration
-
-# Run with coverage
-pytest --cov=vision_framework
-
-# Run specific test file
-pytest tests/unit/test_detection.py
+# Install pre-commit hooks
+pre-commit install
 ```
 
-## Requirements
+### Running tests
 
-See `requirements.txt` for full list of dependencies.
+```bash
+pytest tests/
+```
 
-## License
+### Code Style
 
-MIT License
+This project follows:
+- Black for code formatting
+- isort for import sorting
+- flake8 for code linting
+- mypy for type checking
 
-## Contributing
+## 📝 Contributing
 
 1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Make your changes
+4. Run tests (`pytest tests/`)
+5. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+6. Push to the branch (`git push origin feature/AmazingFeature`)
+7. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [timm](https://github.com/rwightman/pytorch-image-models) for efficient model implementations
+- [YOLOv8](https://github.com/ultralytics/ultralytics) for object detection
+- [PyTorch](https://pytorch.org/) for the deep learning framework
+
+## 📧 Contact
+
+{Khoa Nguyen} - [{toankhoabk@gmail.com}]
+
+Project Link: https://github.com/ntkhoa95/multi-agent-for-vision.git
