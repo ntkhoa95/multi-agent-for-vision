@@ -288,6 +288,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-{Khoa Nguyen} - [{toankhoabk@gmail.com}]
+Khoa Nguyen - [toankhoabk@gmail.com]
 
 Project Link: https://github.com/ntkhoa95/multi-agent-for-vision.git
