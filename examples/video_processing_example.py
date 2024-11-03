@@ -73,9 +73,7 @@ def main():
     for query, target_classes in video_queries:
         try:
             # Create output path
-            output_name = (
-                f"output_{Path(video_path).stem}_{query.replace(' ', '_')}.mp4"
-            )
+            output_name = f"output_{Path(video_path).stem}_{query.replace(' ', '_')}.mp4"
             output_path = f"examples/output/{output_name}"
 
             logger.info(f"\nProcessing with query: {query}")

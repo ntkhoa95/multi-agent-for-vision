@@ -41,9 +41,7 @@ class MobileNetClassificationAgent(BaseVisionAgent):
     def setup_transforms(self):
         """Setup transforms using timm's data config"""
         self.data_config = timm.data.resolve_model_data_config(self.model)
-        self.transform = timm.data.create_transform(
-            **self.data_config, is_training=False
-        )
+        self.transform = timm.data.create_transform(**self.data_config, is_training=False)
 
     def process(self, vision_input: VisionInput) -> VisionOutput:
         start_time = time.time()

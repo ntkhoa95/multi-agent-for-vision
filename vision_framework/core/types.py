@@ -1,8 +1,10 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Optional, Union
+
 import numpy as np
 from PIL import Image
+
 
 class VisionTaskType(Enum):
     OBJECT_DETECTION = "object_detection"
@@ -11,12 +13,14 @@ class VisionTaskType(Enum):
     OCR = "ocr"
     FACE_DETECTION = "face_detection"
 
+
 @dataclass
 class VisionInput:
     image: Union[str, np.ndarray, Image.Image]
     user_comment: str
     task_type: Optional[VisionTaskType] = None
     additional_params: Optional[Dict] = None
+
 
 @dataclass
 class VisionOutput:
@@ -25,10 +29,12 @@ class VisionOutput:
     confidence: float
     processing_time: float
 
+
 @dataclass
 class BatchDetectionResult:
     image_path: str
     vision_output: VisionOutput
+
 
 @dataclass
 class VideoDetectionResult:
@@ -36,12 +42,11 @@ class VideoDetectionResult:
     frames_results: List[VisionOutput]
     fps: float
     total_time: float
-    
+
     @property
     def average_confidence(self) -> float:
         return np.mean([r.confidence for r in self.frames_results])
-    
+
     @property
     def num_frames(self) -> int:
         return len(self.frames_results)
-

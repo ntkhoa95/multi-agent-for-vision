@@ -36,8 +36,6 @@ def test_draw_detections():
         drawn_area = output_image[y1:y2, x1:x2]
 
         # Ensure the region within the bounding box is not all black
-        assert (
-            drawn_area.sum() > 0
-        ), f"Bounding box for {det['class']} not drawn properly"
+        assert drawn_area.sum() > 0, f"Bounding box for {det['class']} not drawn properly"
 
     print("All assertions passed for draw_detections test.")

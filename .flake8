@@ -1,0 +1,19 @@
+[flake8]
+max-line-length = 120
+extend-ignore =
+    E501,  # line too long
+    F401,  # imported but unused
+    F403,  # 'from module import *' used
+    F541,  # f-string missing placeholders
+    F841,  # local variable assigned but never used
+    E722   # do not use bare except
+
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    *.egg*,
+    venv,
+    .venv,
+    docs

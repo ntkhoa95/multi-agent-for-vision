@@ -16,12 +16,8 @@ def orchestrator():
     return VisionOrchestrator(config)
 
 
-def test_image_classification(
-    orchestrator, sample_image="tests/data/images/street.jpg"
-):
-    result = orchestrator.process_image(
-        image_path=sample_image, user_comment="classify this image"
-    )
+def test_image_classification(orchestrator, sample_image="tests/data/images/street.jpg"):
+    result = orchestrator.process_image(image_path=sample_image, user_comment="classify this image")
 
     assert result.task_type == VisionTaskType.IMAGE_CLASSIFICATION
     assert "top_predictions" in result.results
@@ -30,9 +26,7 @@ def test_image_classification(
     assert result.processing_time > 0.0
 
 
-def test_classification_results_format(
-    orchestrator, sample_image="tests/data/images/street.jpg"
-):
+def test_classification_results_format(orchestrator, sample_image="tests/data/images/street.jpg"):
     result = orchestrator.process_image(
         image_path=sample_image,
         user_comment="what is in this image",

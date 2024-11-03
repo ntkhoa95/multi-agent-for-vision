@@ -151,10 +151,7 @@ class YOLODetectionAgent(BaseVisionAgent):
 
         # Get specific classes to detect from additional parameters
         detect_classes = None
-        if (
-            vision_input.additional_params
-            and "detect_classes" in vision_input.additional_params
-        ):
+        if vision_input.additional_params and "detect_classes" in vision_input.additional_params:
             detect_classes = vision_input.additional_params["detect_classes"]
             logger.info(f"Filtering detections for classes: {detect_classes}")
 
@@ -196,9 +193,7 @@ class YOLODetectionAgent(BaseVisionAgent):
         results = []
 
         # Process images in batches
-        for i in tqdm(
-            range(0, len(image_paths), batch_size), desc="Processing batches"
-        ):
+        for i in tqdm(range(0, len(image_paths), batch_size), desc="Processing batches"):
             batch_paths = image_paths[i : i + batch_size]
 
             # Load batch images
@@ -218,8 +213,7 @@ class YOLODetectionAgent(BaseVisionAgent):
 
                 # Calculate confidence
                 overall_confidence = (
-                    sum(d["confidence"] for d in detections[:5])
-                    / min(5, len(detections))
+                    sum(d["confidence"] for d in detections[:5]) / min(5, len(detections))
                     if detections
                     else 0.0
                 )
@@ -254,10 +248,7 @@ class YOLODetectionAgent(BaseVisionAgent):
         logger.info(f"Starting video processing: {video_path}")
 
         # Setup class filtering with validation
-        if (
-            vision_input.additional_params
-            and "detect_classes" in vision_input.additional_params
-        ):
+        if vision_input.additional_params and "detect_classes" in vision_input.additional_params:
             requested_classes = vision_input.additional_params["detect_classes"]
             allowed_classes = self.validate_classes(requested_classes)
 
@@ -266,9 +257,7 @@ class YOLODetectionAgent(BaseVisionAgent):
                 allowed_classes = None
             else:
                 # Get model class indices for filtering
-                class_mapping = {
-                    name.lower(): idx for idx, name in self.model.names.items()
-                }
+                class_mapping = {name.lower(): idx for idx, name in self.model.names.items()}
                 class_indices = [class_mapping[cls] for cls in allowed_classes]
                 logger.info(f"Filtering for classes: {allowed_classes}")
 
@@ -306,9 +295,7 @@ class YOLODetectionAgent(BaseVisionAgent):
                 f"Invalid frame range: {start_frame} to {end_frame} (total frames: {total_frames})"
             )
 
-        logger.debug(
-            f"Processing frames {start_frame} to {end_frame} of {total_frames}"
-        )
+        logger.debug(f"Processing frames {start_frame} to {end_frame} of {total_frames}")
 
         # Initialize results storage
         frames_results = []
@@ -372,10 +359,7 @@ class YOLODetectionAgent(BaseVisionAgent):
                                 class_name = r.names[int(box.cls)].lower()
 
                                 # Skip if not in allowed classes
-                                if (
-                                    allowed_classes
-                                    and class_name not in allowed_classes
-                                ):
+                                if allowed_classes and class_name not in allowed_classes:
                                     continue
 
                                 detection = {
@@ -480,9 +464,7 @@ class YOLODetectionAgent(BaseVisionAgent):
             total_detections += frame.results["num_detections"]
 
         logger.info(f"Total detections: {total_detections}")
-        logger.info(
-            f"Average detections per frame: {total_detections/processed_frames:.2f}"
-        )
+        logger.info(f"Average detections per frame: {total_detections/processed_frames:.2f}")
         logger.info(f"Detected classes: {all_detected_classes}")
 
         if allowed_classes:
