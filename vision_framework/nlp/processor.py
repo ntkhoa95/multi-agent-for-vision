@@ -2,6 +2,8 @@ import logging
 from typing import Dict, List, Optional, Set, Tuple
 
 import spacy
+
+spacy.load("en_core_web_sm")
 from spacy.tokens import Doc
 
 logger = logging.getLogger(__name__)
