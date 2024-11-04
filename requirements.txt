@@ -11,3 +11,6 @@ pytest>=7.4.0
 pytest-cov>=4.1.0
 gradio==4.44.1
 nltk
+transformers>=4.35.0
+accelerate>=0.26.0
+safetensors>=0.4.0
