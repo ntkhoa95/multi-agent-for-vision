@@ -4,9 +4,47 @@
 
 [![CI](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision/branch/main/graph/badge.svg)](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision)
+<div align="center">
+
+[![CI](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision/branch/main/graph/badge.svg)](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
+<img src="docs/demo-app-gradio.png" alt="Vision Framework Demo" width="800"/>
+
+A flexible and extensible multi-agent framework for computer vision tasks, supporting classification, object detection, and more.
+
+</div>
+
+<details>
+<summary>📋 Table of Contents</summary>
+
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Available Examples](#-available-examples)
+- [Basic Usage](#-basic-usage)
+- [Architecture](#-architecture)
+- [Configuration](#-configuration)
+- [Supported Tasks](#-supported-tasks)
+- [Development](#-development)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Acknowledgments](#-acknowledgments)
+- [Contact](#-contact)
+
+</details>
+
+## ✨ Features
+
+<table>
+<tr>
+<td>
+
+### 🤖 Multi-Agent Architecture
+- Classification Agent (MobileNetV3)
+- Object Detection Agent (YOLOv8)
+- Easily extensible for new vision tasks
 <img src="docs/demo-app-gradio.png" alt="Vision Framework Demo" width="800"/>
 
 A flexible and extensible multi-agent framework for computer vision tasks, supporting classification, object detection, and more.
@@ -46,7 +84,23 @@ A flexible and extensible multi-agent framework for computer vision tasks, suppo
 - "What's in this image?"
 - "Detect objects in this scene"
 - "Classify this image"
+### 🗣️ Natural Language Interface
+- "What's in this image?"
+- "Detect objects in this scene"
+- "Classify this image"
 
+</td>
+<td>
+
+### 🎯 Intelligent Task Routing
+- Automatic agent selection
+- Query-based task determination
+- Flexible routing system
+
+### 📊 Comprehensive Output
+- Detailed predictions with confidence scores
+- Processing time metrics
+- Model configuration details
 </td>
 <td>
 
@@ -64,8 +118,14 @@ A flexible and extensible multi-agent framework for computer vision tasks, suppo
 </tr>
 </table>
 
+</td>
+</tr>
+</table>
+
 ## 🚀 Quick Start
 
+<details>
+<summary>Installation Steps</summary>
 <details>
 <summary>Installation Steps</summary>
 
@@ -102,9 +162,32 @@ Features of the demo:
 - Support for both classification and detection
 - Natural language query processing
 - Visual results with bounding boxes and labels
+</details>
+
+## 🎯 Demo Application
+
+The Vision Framework includes a user-friendly web interface built with Gradio:
+
+```bash
+# Run the demo application
+python examples/gradio_demo.py
+```
+
+<div align="center">
+<img src="docs/demo-app-gradio.png" alt="Demo Application Interface" width="800"/>
+</div>
+
+Features of the demo:
+- Interactive web interface
+- Real-time inference
+- Support for both classification and detection
+- Natural language query processing
+- Visual results with bounding boxes and labels
 
 ## 🗂️ Available Examples
 
+<details>
+<summary>1. Classification Example (classification_example.py)</summary>
 <details>
 <summary>1. Classification Example (classification_example.py)</summary>
 
@@ -114,11 +197,13 @@ python examples/classification_example.py
 ```
 
 ### Features:
+### Features:
 - Image classification with detailed class predictions
 - Confidence scores for top-5 predictions
 - Model configuration display
 - Processing time metrics
 
+### Example Output:
 ### Example Output:
 ```
 Processing image: tests/data/images/dog.jpg
@@ -140,7 +225,10 @@ Model Configuration:
 Processing time: 0.064 seconds
 ```
 </details>
+</details>
 
+<details>
+<summary>2. Object Detection Example (detection_example.py)</summary>
 <details>
 <summary>2. Object Detection Example (detection_example.py)</summary>
 
@@ -150,12 +238,16 @@ python examples/detection_example.py
 ```
 
 ### Features:
+### Features:
 - Multiple object detection
 - Bounding box coordinates
 - Class predictions with confidence scores
 - Processing time metrics
 </details>
+</details>
 
+<details>
+<summary>3. Video Processing Example (video_processing_example.py)</summary>
 <details>
 <summary>3. Video Processing Example (video_processing_example.py)</summary>
 
@@ -164,7 +256,9 @@ python examples/detection_example.py
 python examples/video_processing_example.py
 ```
 </details>
+</details>
 
+## 💻 Basic Usage
 ## 💻 Basic Usage
 
 ```python
@@ -196,6 +290,9 @@ print("Predictions:", result.results)
 <details>
 <summary>Project Structure</summary>
 
+<details>
+<summary>Project Structure</summary>
+
 ```
 vision_framework/
 ├── setup.py                # Package setup and dependencies
@@ -203,7 +300,14 @@ vision_framework/
 ├── README.md              # Project documentation
 ├── LICENSE                # License file
 ├── .gitignore            # Git ignore file
+├── README.md              # Project documentation
+├── LICENSE                # License file
+├── .gitignore            # Git ignore file
 │
+├── vision_framework/      # Main package directory
+│   ├── __init__.py        # Package initialization
+│   ├── config.py          # Configuration management
+│   ├── orchestrator.py    # Vision Orchestrator management
 ├── vision_framework/      # Main package directory
 │   ├── __init__.py        # Package initialization
 │   ├── config.py          # Configuration management
@@ -280,7 +384,10 @@ flowchart TB
 4. **NLP Processor**: Interprets natural language queries
 
 ## ⚙️ Configuration
+## ⚙️ Configuration
 
+<details>
+<summary>Configuration Options</summary>
 <details>
 <summary>Configuration Options</summary>
 
@@ -297,9 +404,14 @@ config = {
 }
 ```
 </details>
+</details>
 
 ## 📊 Supported Tasks
 
+### 1. Image Classification
+- Identifies main subjects in images
+- Returns top-5 predictions with confidence scores
+- Supports ImageNet classes
 ### 1. Image Classification
 - Identifies main subjects in images
 - Returns top-5 predictions with confidence scores
@@ -309,9 +421,15 @@ config = {
 - Locates and identifies multiple objects
 - Provides bounding boxes and confidence scores
 - Supports COCO classes
+### 2. Object Detection
+- Locates and identifies multiple objects
+- Provides bounding boxes and confidence scores
+- Supports COCO classes
 
 ## 🛠️ Development
 
+<details>
+<summary>Setting Up Development Environment</summary>
 <details>
 <summary>Setting Up Development Environment</summary>
 
@@ -320,7 +438,12 @@ config = {
 python -m venv .venv
 source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
 
+# Create and activate virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
+
 # Install development dependencies
+pip install -e ".[dev]"
 pip install -e ".[dev]"
 
 # Install pre-commit hooks
@@ -331,9 +454,17 @@ python -c "import nltk; nltk.download('wordnet')"
 
 # Download spaCy model
 python -m spacy download en_core_web_sm
+
+# Download required NLTK data
+python -c "import nltk; nltk.download('wordnet')"
+
+# Download spaCy model
+python -m spacy download en_core_web_sm
 ```
 </details>
+</details>
 
+### Running Tests
 ### Running Tests
 ```bash
 pytest tests/
@@ -346,6 +477,7 @@ This project follows:
 - flake8 for code linting
 - mypy for type checking
 
+## 🤝 Contributing
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -366,8 +498,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [YOLOv8](https://github.com/ultralytics/ultralytics) for object detection
 - [PyTorch](https://pytorch.org/) for the deep learning framework
 - [Gradio](https://gradio.app/) for the demo interface
+- [Gradio](https://gradio.app/) for the demo interface
 
 ## 📧 Contact
+
+<div align="center">
+
+**Khoa Nguyen**
+
+[![Email](https://img.shields.io/badge/Email-toankhoabk%40gmail.com-blue?style=flat-square&logo=gmail)](mailto:toankhoabk@gmail.com)
+[![GitHub](https://img.shields.io/badge/GitHub-ntkhoa95-black?style=flat-square&logo=github)](https://github.com/ntkhoa95/multi-agent-for-vision)
+
+</div>
 
 <div align="center">
 
