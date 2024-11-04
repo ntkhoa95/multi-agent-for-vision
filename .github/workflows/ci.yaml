@@ -29,16 +29,6 @@ jobs:
         python -m spacy download en_core_web_sm
         pip install -e .
 
-    - name: Download test data
-      run: |
-        # Download sample images for testing
-        wget -P tests/data/images https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg -O tests/data/images/street.jpg
-        wget -P tests/data/images https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/zidane.jpg -O tests/data/images/person.jpg
-        wget -P tests/data/images https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/dog.jpg -O tests/data/images/dog.jpg
-
-        # Download sample video for testing
-        wget -P tests/data/videos https://raw.githubusercontent.com/ultralytics/yolov5/master/data/videos/human-cropped.mp4 -O tests/data/videos/crosswalk.avi
-
     - name: Run tests with pytest
       run: |
         pytest tests/ --cov=vision_framework --cov-report=xml
