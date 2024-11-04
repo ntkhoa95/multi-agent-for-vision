@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from vision_framework import VisionOrchestrator, VisionTaskType
@@ -16,8 +18,21 @@ def orchestrator():
     return VisionOrchestrator(config)
 
 
-def test_image_classification(orchestrator, sample_image="tests/data/images/street.jpg"):
-    result = orchestrator.process_image(image_path=sample_image, user_comment="classify this image")
+def setup_test_image(image_url, image_path):
+    """Setup test image for classification tests."""
+    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    if not os.path.exists(image_path):
+        os.system(f"wget -O {image_path} {image_url}")
+
+
+def test_image_classification(orchestrator):
+    image_path = "tests/data/images/street.jpg"
+    setup_test_image(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg",
+        image_path,
+    )
+
+    result = orchestrator.process_image(image_path=image_path, user_comment="classify this image")
 
     assert result.task_type == VisionTaskType.IMAGE_CLASSIFICATION
     assert "top_predictions" in result.results
@@ -26,9 +41,15 @@ def test_image_classification(orchestrator, sample_image="tests/data/images/stre
     assert result.processing_time > 0.0
 
 
-def test_classification_results_format(orchestrator, sample_image="tests/data/images/street.jpg"):
+def test_classification_results_format(orchestrator):
+    image_path = "tests/data/images/street.jpg"
+    setup_test_image(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg",
+        image_path,
+    )
+
     result = orchestrator.process_image(
-        image_path=sample_image,
+        image_path=image_path,
         user_comment="what is in this image",
         task_type=VisionTaskType.IMAGE_CLASSIFICATION,  # Explicitly set task type
     )
