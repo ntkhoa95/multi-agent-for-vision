@@ -15,42 +15,6 @@
 
 A flexible and extensible multi-agent framework for computer vision tasks, supporting classification, object detection, and more.
 
-</div>
-
-<details>
-<summary>📋 Table of Contents</summary>
-
-- [Features](#-features)
-- [Quick Start](#-quick-start)
-- [Available Examples](#-available-examples)
-- [Basic Usage](#-basic-usage)
-- [Architecture](#-architecture)
-- [Configuration](#-configuration)
-- [Supported Tasks](#-supported-tasks)
-- [Development](#-development)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Acknowledgments](#-acknowledgments)
-- [Contact](#-contact)
-
-</details>
-
-## ✨ Features
-
-<table>
-<tr>
-<td>
-
-### 🤖 Multi-Agent Architecture
-- Classification Agent (MobileNetV3)
-- Object Detection Agent (YOLOv8)
-- Easily extensible for new vision tasks
-<img src="docs/demo-app-gradio.png" alt="Vision Framework Demo" width="800"/>
-
-A flexible and extensible multi-agent framework for computer vision tasks, supporting classification, object detection, and more.
-
-</div>
-
 <details>
 <summary>📋 Table of Contents</summary>
 
@@ -156,7 +120,6 @@ python examples/gradio_demo.py
 <img src="docs/demo-app-gradio.png" alt="Demo Application Interface" width="800"/>
 </div>
 
-Features of the demo:
 - Interactive web interface
 - Real-time inference
 - Support for both classification and detection
@@ -177,7 +140,6 @@ python examples/gradio_demo.py
 <img src="docs/demo-app-gradio.png" alt="Demo Application Interface" width="800"/>
 </div>
 
-Features of the demo:
 - Interactive web interface
 - Real-time inference
 - Support for both classification and detection
@@ -188,8 +150,6 @@ Features of the demo:
 
 <details>
 <summary>1. Classification Example (classification_example.py)</summary>
-<details>
-<summary>1. Classification Example (classification_example.py)</summary>
 
 ```python
 # Run the classification example
@@ -197,13 +157,11 @@ python examples/classification_example.py
 ```
 
 ### Features:
-### Features:
 - Image classification with detailed class predictions
 - Confidence scores for top-5 predictions
 - Model configuration display
 - Processing time metrics
 
-### Example Output:
 ### Example Output:
 ```
 Processing image: tests/data/images/dog.jpg
@@ -229,8 +187,6 @@ Processing time: 0.064 seconds
 
 <details>
 <summary>2. Object Detection Example (detection_example.py)</summary>
-<details>
-<summary>2. Object Detection Example (detection_example.py)</summary>
 
 ```python
 # Run the detection example
@@ -238,16 +194,12 @@ python examples/detection_example.py
 ```
 
 ### Features:
-### Features:
 - Multiple object detection
 - Bounding box coordinates
 - Class predictions with confidence scores
 - Processing time metrics
 </details>
-</details>
 
-<details>
-<summary>3. Video Processing Example (video_processing_example.py)</summary>
 <details>
 <summary>3. Video Processing Example (video_processing_example.py)</summary>
 
@@ -256,9 +208,7 @@ python examples/detection_example.py
 python examples/video_processing_example.py
 ```
 </details>
-</details>
 
-## 💻 Basic Usage
 ## 💻 Basic Usage
 
 ```python
@@ -286,9 +236,6 @@ print("Predictions:", result.results)
 ```
 
 ## 🏗️ Architecture
-
-<details>
-<summary>Project Structure</summary>
 
 <details>
 <summary>Project Structure</summary>
@@ -384,10 +331,7 @@ flowchart TB
 4. **NLP Processor**: Interprets natural language queries
 
 ## ⚙️ Configuration
-## ⚙️ Configuration
 
-<details>
-<summary>Configuration Options</summary>
 <details>
 <summary>Configuration Options</summary>
 
@@ -404,7 +348,6 @@ config = {
 }
 ```
 </details>
-</details>
 
 ## 📊 Supported Tasks
 
@@ -412,15 +355,7 @@ config = {
 - Identifies main subjects in images
 - Returns top-5 predictions with confidence scores
 - Supports ImageNet classes
-### 1. Image Classification
-- Identifies main subjects in images
-- Returns top-5 predictions with confidence scores
-- Supports ImageNet classes
 
-### 2. Object Detection
-- Locates and identifies multiple objects
-- Provides bounding boxes and confidence scores
-- Supports COCO classes
 ### 2. Object Detection
 - Locates and identifies multiple objects
 - Provides bounding boxes and confidence scores
@@ -430,20 +365,13 @@ config = {
 
 <details>
 <summary>Setting Up Development Environment</summary>
-<details>
-<summary>Setting Up Development Environment</summary>
 
 ```bash
 # Create and activate virtual environment
 python -m venv .venv
 source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
 
-# Create and activate virtual environment
-python -m venv .venv
-source .venv/bin/activate  # On Windows, use: .venv\Scripts\activate
-
 # Install development dependencies
-pip install -e ".[dev]"
 pip install -e ".[dev]"
 
 # Install pre-commit hooks
@@ -462,22 +390,12 @@ python -c "import nltk; nltk.download('wordnet')"
 python -m spacy download en_core_web_sm
 ```
 </details>
-</details>
 
-### Running Tests
 ### Running Tests
 ```bash
 pytest tests/
 ```
 
-### Code Style
-This project follows:
-- Black for code formatting
-- isort for import sorting
-- flake8 for code linting
-- mypy for type checking
-
-## 🤝 Contributing
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -501,15 +419,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Gradio](https://gradio.app/) for the demo interface
 
 ## 📧 Contact
-
-<div align="center">
-
-**Khoa Nguyen**
-
-[![Email](https://img.shields.io/badge/Email-toankhoabk%40gmail.com-blue?style=flat-square&logo=gmail)](mailto:toankhoabk@gmail.com)
-[![GitHub](https://img.shields.io/badge/GitHub-ntkhoa95-black?style=flat-square&logo=github)](https://github.com/ntkhoa95/multi-agent-for-vision)
-
-</div>
 
 <div align="center">
 
