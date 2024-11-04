@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Set
 
 import cv2
 
@@ -31,33 +31,57 @@ class VisionOrchestrator:
         detection_agent = YOLODetectionAgent(self.config)
         self.router.register_agent(VisionTaskType.OBJECT_DETECTION, detection_agent)
 
+    def list_agents(self) -> Set[VisionTaskType]:
+        """List all registered agents."""
+        return set(self.router.agents.keys())
+
     def filter_detections(self, detections, allowed_classes):
         """Filter detections based on allowed class names."""
         return [
             det for det in detections if det["class"].lower() in map(str.lower, allowed_classes)
         ]
 
-    def visualize_detections(self, image_path, detections):
-        """Visualize detections on the image."""
-        image = cv2.imread(image_path)
-        for detection in detections:
-            x1, y1, x2, y2 = detection["bbox"]
-            label = detection["class"]
-            confidence = detection["confidence"]
-            # Draw bounding box
-            cv2.rectangle(image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            # Add label with confidence
-            cv2.putText(
-                image,
-                f"{label}: {confidence:.2f}",
-                (x1, y1 - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (255, 255, 255),
-                2,
-            )
+    def visualize_detections(
+        self, image_path: str, detections: List[Dict], output_path: Optional[str] = None
+    ) -> bool:
+        """
+        Visualize detections on the image and optionally save to output_path.
+        Returns True if visualization is successful.
+        """
+        try:
+            image = cv2.imread(image_path)
+            if image is None:
+                logger.error(f"Failed to read image: {image_path}")
+                return False
 
-        return image
+            for detection in detections:
+                if "bbox" not in detection:
+                    continue
+
+                x1, y1, x2, y2 = detection["bbox"]
+                label = detection["class"]
+                confidence = detection.get("confidence", 0)
+
+                # Draw bounding box
+                cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+                # Add label with confidence
+                cv2.putText(
+                    image,
+                    f"{label}: {confidence:.2f}",
+                    (int(x1), int(y1) - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    2,
+                )
+
+            if output_path:
+                cv2.imwrite(output_path, image)
+
+            return True
+        except Exception as e:
+            logger.error(f"Error visualizing detections: {str(e)}")
+            return False
 
     def process_image(
         self,

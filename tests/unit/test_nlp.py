@@ -84,11 +84,13 @@ def test_process_batch(orchestrator):
     # Set up test images
     dog_path = "tests/data/images/dog.jpg"
     setup_test_image(
-        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/dog.jpg", dog_path
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/dog.jpg",
+        dog_path,
     )
     bus_path = "tests/data/images/street.jpg"
     setup_test_image(
-        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg", bus_path
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg",
+        bus_path,
     )
 
     # Mock detection agent's process_batch function
