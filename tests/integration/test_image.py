@@ -11,10 +11,10 @@ def test_draw_detections():
     # Define a list of detection dictionaries
     detections = [
         {
-            "bbox": [10, 10, 50, 50],  # x1, y1, x2, y2
+            "bbox": [10, 10, 50, 50],
             "class": "cat",
             "confidence": 0.85,
-        },
+        },  # x1, y1, x2, y2
         {"bbox": [60, 60, 90, 90], "class": "dog", "confidence": 0.95, "track_id": 42},
     ]
 

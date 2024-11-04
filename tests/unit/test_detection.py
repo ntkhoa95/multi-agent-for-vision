@@ -1,3 +1,4 @@
+import os
 import time
 from unittest.mock import MagicMock, patch
 
@@ -14,6 +15,20 @@ from vision_framework.core.types import (
     VisionOutput,
     VisionTaskType,
 )
+
+
+def setup_test_image(image_url, image_path):
+    """Setup test image for detection tests."""
+    os.makedirs(os.path.dirname(image_path), exist_ok=True)
+    if not os.path.exists(image_path):
+        os.system(f"wget -O {image_path} {image_url}")
+
+
+def setup_test_video(video_url, video_path):
+    """Setup test video for detection tests."""
+    os.makedirs(os.path.dirname(video_path), exist_ok=True)
+    if not os.path.exists(video_path):
+        os.system(f"wget -O {video_path} {video_url}")
 
 
 @pytest.fixture
@@ -165,6 +180,13 @@ def test_process_no_detections(agent):
 @patch.object(YOLODetectionAgent, "load_image")
 @patch.object(YOLODetectionAgent, "process_detections")
 def test_process_batch(mock_process_detections, mock_load_image, agent):
+    # Set up test image
+    image_path = "tests/data/images/street.jpg"
+    setup_test_image(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg",
+        image_path,
+    )
+
     mock_image = np.zeros((640, 640, 3))
     mock_load_image.return_value = mock_image
     mock_process_detections.return_value = [
@@ -172,7 +194,7 @@ def test_process_batch(mock_process_detections, mock_load_image, agent):
     ]
     agent.model.predict = MagicMock(return_value=[MagicMock()])
 
-    results = agent.process_batch(["tests/data/images/street.jpg"])
+    results = agent.process_batch([image_path])
     assert len(results) == 1
     assert results[0].vision_output.task_type == VisionTaskType.OBJECT_DETECTION
 
@@ -191,11 +213,18 @@ def test_process_batch_invalid_image_paths(mock_load_image, agent):
 
 @patch.object(YOLODetectionAgent, "process_detections")
 def test_process_batch_no_detections(mock_process_detections, agent):
+    # Set up test image
+    image_path = "tests/data/images/street.jpg"
+    setup_test_image(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/images/bus.jpg",
+        image_path,
+    )
+
     mock_image = np.zeros((640, 640, 3))
     mock_process_detections.return_value = []
     agent.model.predict = MagicMock(return_value=[MagicMock()])
 
-    results = agent.process_batch(["tests/data/images/street.jpg"])
+    results = agent.process_batch([image_path])
     assert len(results) == 1
     assert results[0].vision_output.task_type == VisionTaskType.OBJECT_DETECTION
     assert len(results[0].vision_output.results["detections"]) == 0
@@ -203,18 +232,25 @@ def test_process_batch_no_detections(mock_process_detections, agent):
 
 @patch.object(YOLODetectionAgent, "process_detections")
 def test_process_video(mock_process_detections, agent):
+    # Set up test video
+    video_path = "tests/data/videos/crosswalk.avi"
+    setup_test_video(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/videos/human-cropped.mp4",
+        video_path,
+    )
+
     mock_process_detections.return_value = [
         {"class": "person", "bbox": [0, 0, 10, 10], "confidence": 0.9}
     ]
     agent.model.predict = MagicMock(return_value=[MagicMock()])
 
     vision_input = VisionInput(
-        image="tests/data/videos/crosswalk.avi",
+        image=video_path,
         user_comment="detect human",
         additional_params={"detect_classes": ["person"]},
     )
     result = agent.process_video(vision_input)
-    assert result.video_path == "tests/data/videos/crosswalk.avi"
+    assert result.video_path == video_path
     assert result.fps > 0
     assert result.total_time > 0
 
@@ -246,8 +282,15 @@ def test_process_video_no_valid_frames(mock_video_capture, agent):
 
 
 def test_process_video_invalid_frame_range(agent):
+    # Set up test video
+    video_path = "tests/data/videos/crosswalk.avi"
+    setup_test_video(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/videos/human-cropped.mp4",
+        video_path,
+    )
+
     vision_input = VisionInput(
-        image="tests/data/videos/crosswalk.avi",
+        image=video_path,
         user_comment="detect human",
         additional_params={"detect_classes": ["person"]},
     )
@@ -256,6 +299,13 @@ def test_process_video_invalid_frame_range(agent):
 
 
 def test_process_video_frame_range(agent):
+    # Set up test video
+    video_path = "tests/data/videos/crosswalk.avi"
+    setup_test_video(
+        "https://raw.githubusercontent.com/ultralytics/yolov5/master/data/videos/human-cropped.mp4",
+        video_path,
+    )
+
     mock_process_detections = MagicMock()
     mock_process_detections.return_value = [
         {"class": "person", "bbox": [0, 0, 10, 10], "confidence": 0.9}
@@ -263,12 +313,12 @@ def test_process_video_frame_range(agent):
     agent.model.predict = MagicMock(return_value=[MagicMock()])
 
     vision_input = VisionInput(
-        image="tests/data/videos/crosswalk.avi",
+        image=video_path,
         user_comment="detect human",
         additional_params={"detect_classes": ["person"]},
     )
     result = agent.process_video(vision_input, start_time=1.0, end_time=2.0)
-    assert result.video_path == "tests/data/videos/crosswalk.avi"
+    assert result.video_path == video_path
     assert result.fps > 0
     assert result.total_time > 0
 
