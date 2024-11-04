@@ -416,7 +416,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [YOLOv8](https://github.com/ultralytics/ultralytics) for object detection
 - [PyTorch](https://pytorch.org/) for the deep learning framework
 - [Gradio](https://gradio.app/) for the demo interface
-- [Gradio](https://gradio.app/) for the demo interface
 
 ## 📧 Contact
 

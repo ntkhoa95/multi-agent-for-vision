@@ -9,6 +9,11 @@ examples/output/*
 *.onnx
 *.pyc
 *.zip
+*.bat
+*.flake8
+*.ini
+.coverage
+*.cfg
 vision_framework.egg-info/*
 
 # Python

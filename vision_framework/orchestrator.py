@@ -1,12 +1,14 @@
+# vision_framework/orchestrator.py
 import logging
 import time
 from typing import Dict, List, Optional, Set, Tuple
 
 import cv2
 import numpy as np
+import torch
 from PIL import Image
 
-from .agents.captioning import BlipCaptioningAgent
+from .agents.captioning import CustomCaptioningAgent
 from .agents.classification import MobileNetClassificationAgent
 from .agents.detection import YOLODetectionAgent
 from .core.config import validate_config
@@ -31,6 +33,9 @@ class VisionOrchestrator:
 
     def initialize_agents(self):
         """Initialize and register all vision agents."""
+        # Debug log available task types
+        logger.info(f"Available task types: {[t.value for t in VisionTaskType]}")
+
         # Classification agent
         try:
             classification_agent = MobileNetClassificationAgent(self.config)
@@ -50,11 +55,32 @@ class VisionOrchestrator:
         # Captioning agent (only if enabled)
         if self.enable_captioning:
             try:
-                captioning_agent = BlipCaptioningAgent(self.config)
+                captioning_agent = CustomCaptioningAgent(self.config)
                 self.router.register_agent(VisionTaskType.IMAGE_CAPTIONING, captioning_agent)
-                logger.info("Registered agent for task type: IMAGE_CAPTIONING")
+                logger.info(f"Registered agent for task type: {VisionTaskType.IMAGE_CAPTIONING}")
             except Exception as e:
                 logger.warning(f"Failed to initialize captioning agent: {str(e)}")
+
+        # Debug log registered agents
+        logger.info(f"Registered agents: {self.list_agents()}")
+
+        # # GIT Captioning agent (only if enabled)
+        # if self.enable_captioning:
+        #     try:
+        #         # Check for available GPU memory and select appropriate model
+        #         if torch.cuda.is_available():
+        #             gpu_memory = torch.cuda.get_device_properties(0).total_memory / 1024**3  # GB
+        #             if gpu_memory <= 6:  # For 6GB or less GPU
+        #                 self.config["GIT_MODEL_NAME"] = "microsoft/git-small-coco"
+        #             else:
+        #                 self.config["GIT_MODEL_NAME"] = "microsoft/git-base-coco"
+        #             logger.info(f"Selected GIT model: {self.config['GIT_MODEL_NAME']}")
+
+        #         captioning_agent = GITCaptioningAgent(self.config)
+        #         self.router.register_agent(VisionTaskType.IMAGE_CAPTIONING, captioning_agent)
+        #         logger.info("Registered agent for task type: IMAGE_CAPTIONING")
+        #     except Exception as e:
+        #         logger.warning(f"Failed to initialize captioning agent: {str(e)}")
 
     def list_agents(self) -> Set[VisionTaskType]:
         """List all registered agents."""
@@ -109,7 +135,7 @@ class VisionOrchestrator:
         user_comment: Optional[str] = None,
         task_type: Optional[VisionTaskType] = None,
     ) -> Tuple[VisionOutput, Optional[VisionOutput]]:
-        """Process image with detection and generate caption for detected objects."""
+        """Process image with detection and generate caption."""
         detection_result = self.process_image(
             image_path=image_path,
             user_comment=user_comment or "detect objects",
@@ -119,13 +145,10 @@ class VisionOrchestrator:
         caption_result = None
         if VisionTaskType.IMAGE_CAPTIONING in self.router.agents:
             try:
-                detections = detection_result.results.get("detections", [])
-                objects = [f"{d['class']}" for d in detections]
-                prompt = f"An image containing {', '.join(objects)}"
-
+                # For GIT model, we can directly caption without using detection results
                 caption_result = self.process_image(
                     image_path=image_path,
-                    user_comment=prompt,
+                    user_comment="Describe this image",  # GIT works better with simple prompts
                     task_type=VisionTaskType.IMAGE_CAPTIONING,
                 )
             except Exception as e:
@@ -146,8 +169,13 @@ class VisionOrchestrator:
         if task_type is None:
             task_type, additional_params = self.router.determine_task_type(user_comment)
 
+        logger.debug(f"Processing image with task type: {task_type}")
+        logger.debug(f"Available agents: {self.list_agents()}")
+
         agent = self.router.agents.get(task_type)
         if agent is None:
+            logger.error(f"No agent found for task type: {task_type}")
+            logger.error(f"Registered agents: {self.list_agents()}")
             raise ValueError(f"No agent registered for task type: {task_type}")
 
         vision_input = VisionInput(
@@ -218,6 +246,7 @@ class VisionOrchestrator:
             end_time=end_time,
         )
 
+        # Generate captions for video frames if enabled
         frame_captions = None
         if self.enable_captioning and VisionTaskType.IMAGE_CAPTIONING in self.router.agents:
             captioning_agent = self.router.agents[VisionTaskType.IMAGE_CAPTIONING]
@@ -227,10 +256,16 @@ class VisionOrchestrator:
                 if "frame" in frame_result.results:
                     caption_input = VisionInput(
                         image=frame_result.results["frame"],
-                        user_comment="",
+                        user_comment="Describe this scene",
                         task_type=VisionTaskType.IMAGE_CAPTIONING,
                     )
                     caption_output = captioning_agent.process(caption_input)
                     frame_captions.append(caption_output)
 
         return video_result, frame_captions
+
+    def clear_gpu_memory(self):
+        """Clear GPU memory if available."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            logger.info("Cleared GPU memory cache")

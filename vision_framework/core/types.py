@@ -9,7 +9,7 @@ from PIL import Image
 class VisionTaskType(Enum):
     OBJECT_DETECTION = "object_detection"
     IMAGE_CLASSIFICATION = "classification"
-    IMAGE_CAPTIONING = "captioning"
+    IMAGE_CAPTIONING = "image_captioning"
     SEGMENTATION = "segmentation"
     OCR = "ocr"
     FACE_DETECTION = "face_detection"

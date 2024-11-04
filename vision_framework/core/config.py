@@ -19,6 +19,14 @@ DEFAULT_CONFIG = {
     "VIDEO_FPS": 30,
     "ENABLE_TRACK": True,
     "SAVE_CROPS": True,
+    "ENABLE_CAPTIONING": True,
+    "MAX_CAPTION_LENGTH": 50,
+    "MIN_CAPTION_LENGTH": 5,
+    "NUM_BEAMS": 3,
+    "GIT_MODEL_NAME": "nlpconnect/vit-gpt2-image-captioning",
+    "TEMPERATURE": 1.0,
+    "NO_REPEAT_NGRAM_SIZE": 3,
+    "DO_SAMPLE": False,
 }
 
 
