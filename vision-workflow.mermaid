@@ -1,0 +1,43 @@
+flowchart TB
+    subgraph Input
+        A[Image] --> C{VisionInput}
+        B[User Comment] --> C
+        P[Additional Params] -.-> C
+    end
+
+    subgraph Orchestrator
+        C --> D[VisionOrchestrator]
+        D --> E[AgentRouter]
+
+        subgraph Router Logic
+            E --> F{Task Type\nSpecified?}
+            F -->|Yes| H[Get Registered Agent]
+            F -->|No| G[Analyze Comment\nKeywords]
+            G --> H
+        end
+    end
+
+    subgraph Agents
+        H --> I{Select Agent}
+        I -->|Object Detection| J[Object Detection\nAgent]
+        I -->|Classification| K[Classification\nAgent]
+        I -->|Segmentation| L[Segmentation\nAgent]
+        I -->|OCR| M[OCR Agent]
+        I -->|Face Detection| N[Face Detection\nAgent]
+    end
+
+    subgraph Processing
+        J --> O[Process Image]
+        K --> O
+        L --> O
+        M --> O
+        N --> O
+        O --> Q[Create VisionOutput]
+    end
+
+    Q --> R[Return Results]
+
+    style Input fill:#e1f5fe
+    style Orchestrator fill:#fff3e0
+    style Agents fill:#f3e5f5
+    style Processing fill:#e8f5e9
