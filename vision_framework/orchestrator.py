@@ -253,32 +253,45 @@ class VisionOrchestrator:
         task_type: Optional[VisionTaskType] = None,
     ) -> Tuple[VisionOutput, Optional[VisionOutput]]:
         """Process image with detection and generate caption for detected objects."""
+
+        # Parse the query to get target classes
+        target_classes = None
+        if user_comment:
+            task_type, additional_params = self.router.determine_task_type(user_comment)
+            if additional_params and "detect_classes" in additional_params:
+                target_classes = additional_params["detect_classes"]
+
+        # Process detection with filtered classes
         detection_result = self.process_image(
             image_path=image_path,
             user_comment=user_comment or "detect objects",
             task_type=task_type or VisionTaskType.OBJECT_DETECTION,
+            additional_params={"detect_classes": target_classes} if target_classes else None,
         )
 
         caption_result = None
         if VisionTaskType.IMAGE_CAPTIONING in self.router.agents:
             try:
+                # Only use filtered detections for caption
                 detections = detection_result.results.get("detections", [])
+                if target_classes:
+                    detections = [
+                        det
+                        for det in detections
+                        if det["class"].lower() in [cls.lower() for cls in target_classes]
+                    ]
+
                 objects = [f"{d['class']}" for d in detections]
-                prompt = f"An image containing {', '.join(objects)}"
+                prompt = (
+                    f"An image containing {', '.join(objects)}"
+                    if objects
+                    else "Describe this image"
+                )
 
                 caption_result = self.process_image(
                     image_path=image_path,
                     user_comment=prompt,
                     task_type=VisionTaskType.IMAGE_CAPTIONING,
-                )
-
-                # You could also visualize here if needed
-                output_path = f"results/{Path(image_path).stem}_with_caption.jpg"
-                self.visualize_detections(
-                    image_path=image_path,
-                    detections=detection_result.results["detections"],
-                    output_path=output_path,
-                    caption=caption_result.results.get("caption"),
                 )
 
             except Exception as e:
@@ -293,11 +306,15 @@ class VisionOrchestrator:
         task_type: Optional[VisionTaskType] = None,
         additional_params: Optional[Dict] = None,
     ) -> VisionOutput:
-        """Process single image."""
+        """Process single image with proper class filtering."""
         start_time = time.time()
 
         if task_type is None:
-            task_type, additional_params = self.router.determine_task_type(user_comment)
+            task_type, parsed_params = self.router.determine_task_type(user_comment)
+            if additional_params is None:
+                additional_params = parsed_params
+            elif parsed_params:
+                additional_params.update(parsed_params)
 
         agent = self.router.agents.get(task_type)
         if agent is None:

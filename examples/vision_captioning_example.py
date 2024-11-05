@@ -81,65 +81,48 @@ def main():
     logger.info("-" * 50)
 
     try:
+        # Be explicit about wanting only people
         detection_result, caption_result = orchestrator.process_image_with_caption(
             image_path=str(image_path),
             user_comment="detect people",
             task_type=VisionTaskType.OBJECT_DETECTION,
         )
 
-        # Print detection results
-        logger.info("\nDetection Results:")
-        for detection in detection_result.results.get("detections", []):
-            logger.info(
-                f"- Found {detection['class']} with confidence {detection['confidence']:.2f}"
-            )
+        # Only print filtered detections
+        logger.info("\nDetection Results (People only):")
+        # for detection in detection_result.results.get("detections", []):
+        #     if detection['class'].lower() == 'person':
+        #         logger.info(
+        #             f"- Found person with confidence {detection['confidence']:.2f}"
+        #         )
 
-        # Print caption
         if caption_result and caption_result.results.get("caption"):
             logger.info("\nGenerated Caption:")
             logger.info(caption_result.results["caption"])
         else:
             logger.warning("No caption was generated")
+
+        # Save annotated image with filtered detections
+        output_path = Path("examples/output/annotated_street.jpg")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Only visualize people detections
+        filtered_detections = [
+            det
+            for det in detection_result.results["detections"]
+            if det["class"].lower() == "person"
+        ]
+
+        orchestrator.visualize_detections(
+            str(image_path),
+            filtered_detections,  # Use filtered detections
+            str(output_path),
+            caption=caption_result.results.get("caption") if caption_result else None,
+        )
+        logger.info(f"\nAnnotated image saved to: {output_path}")
 
     except Exception as e:
         logger.error(f"Error in detection+captioning: {str(e)}", exc_info=True)
-
-    # Example 2: Direct captioning
-    logger.info("\nExample 2: Direct image captioning")
-    logger.info("-" * 50)
-
-    try:
-        caption_result = orchestrator.process_image(
-            image_path=str(image_path),
-            user_comment="describe human activity",
-            task_type=VisionTaskType.IMAGE_CAPTIONING,
-        )
-
-        if caption_result and caption_result.results.get("caption"):
-            logger.info("\nGenerated Caption:")
-            logger.info(caption_result.results["caption"])
-        else:
-            logger.warning("No caption was generated")
-
-    except Exception as e:
-        logger.error(f"Error in direct captioning: {str(e)}", exc_info=True)
-
-    # Save annotated image
-    try:
-        if "detection_result" in locals():
-            output_path = Path("examples/output/annotated_street.jpg")
-            output_path.parent.mkdir(parents=True, exist_ok=True)
-
-            orchestrator.visualize_detections(
-                str(image_path),
-                detection_result.results["detections"],
-                str(output_path),
-                caption=caption_result.results["caption"],
-            )
-            logger.info(f"\nAnnotated image saved to: {output_path}")
-
-    except Exception as e:
-        logger.error(f"Error saving annotated image: {str(e)}", exc_info=True)
 
 
 if __name__ == "__main__":
