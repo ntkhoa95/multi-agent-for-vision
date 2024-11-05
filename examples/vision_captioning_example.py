@@ -19,7 +19,7 @@ def download_test_image():
     image_dir = Path("tests/data/images")
     image_dir.mkdir(parents=True, exist_ok=True)
 
-    image_path = image_dir / "street.jpg"
+    image_path = image_dir / "bus.jpg"
     if not image_path.exists():
         logger.info(f"Downloading test image to {image_path}")
         url = "[MASKED]/ultralytics/assets/raw/main/yolo/bus.jpg"
@@ -83,7 +83,7 @@ def main():
     try:
         detection_result, caption_result = orchestrator.process_image_with_caption(
             image_path=str(image_path),
-            user_comment="detect vehicles and people",
+            user_comment="detect people",
             task_type=VisionTaskType.OBJECT_DETECTION,
         )
 
@@ -111,7 +111,7 @@ def main():
     try:
         caption_result = orchestrator.process_image(
             image_path=str(image_path),
-            user_comment="describe this image",
+            user_comment="describe human activity",
             task_type=VisionTaskType.IMAGE_CAPTIONING,
         )
 
@@ -131,7 +131,10 @@ def main():
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
             orchestrator.visualize_detections(
-                str(image_path), detection_result.results["detections"], str(output_path)
+                str(image_path),
+                detection_result.results["detections"],
+                str(output_path),
+                caption=caption_result.results["caption"],
             )
             logger.info(f"\nAnnotated image saved to: {output_path}")
 

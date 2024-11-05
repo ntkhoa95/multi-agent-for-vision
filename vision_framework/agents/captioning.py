@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 
 import torch
 from PIL import Image
-from transformers import BlipForConditionalGeneration, BlipProcessor
+from transformers import AutoTokenizer, VisionEncoderDecoderModel, ViTImageProcessor
 
 from ..core.types import VisionInput, VisionOutput, VisionTaskType
 from .base import BaseVisionAgent
@@ -12,76 +12,93 @@ from .base import BaseVisionAgent
 logger = logging.getLogger(__name__)
 
 
-class BlipCaptioningAgent(BaseVisionAgent):
+class CaptioningAgent(BaseVisionAgent):
+    """Enhanced captioning agent using VIT-GPT2 model."""
+
     def __init__(self, config: Dict):
-        """Initialize BLIP captioning agent."""
-        # Set parameters before initializing base class
-        self.max_length = config.get("MAX_CAPTION_LENGTH", 32)
-        self.min_length = config.get("MIN_CAPTION_LENGTH", 8)
-        self.batch_size = config.get("BATCH_SIZE", 16)
-        self.num_beams = config.get("NUM_BEAMS", 4)
+        """Initialize VIT-GPT2 captioning agent."""
+        # Initialize base parameters
+        self.device = torch.device(
+            config.get("DEVICE", "cuda" if torch.cuda.is_available() else "cpu")
+        )
 
-        # Initialize processor first
-        logger.info("Loading BLIP processor...")
-        self.processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+        # Model configuration
+        self.model_name = config.get("GIT_MODEL_NAME", "nlpconnect/vit-gpt2-image-captioning")
+        self.max_length = config.get("MAX_CAPTION_LENGTH", 50)
+        self.min_length = config.get("MIN_CAPTION_LENGTH", 5)
+        self.num_beams = config.get("NUM_BEAMS", 3)
+        self.temperature = config.get("TEMPERATURE", 1.0)
+        self.no_repeat_ngram_size = config.get("NO_REPEAT_NGRAM_SIZE", 3)
+        self.do_sample = config.get("DO_SAMPLE", False)
 
-        # Call base class __init__ which will call load_model and set self.model
-        super().__init__(config)
-        self.model = self.load_model()
-        logger.info("BlipCaptioningAgent initialized successfully")
+        logger.info(f"Initializing CaptioningAgent with device: {self.device}")
+        logger.info(f"Using model: {self.model_name}")
 
-    def load_model(self):
-        """Load the BLIP model."""
+        # Initialize processors
         try:
-            logger.info("Loading BLIP model...")
-            model = BlipForConditionalGeneration.from_pretrained(
-                "Salesforce/blip-image-captioning-base",
-                torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
-            ).to(self.device)
-            model.eval()
-            logger.info("BLIP model loaded successfully")
-            return model
+            self.image_processor = ViTImageProcessor.from_pretrained(self.model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            logger.info("Processors initialized successfully")
         except Exception as e:
-            logger.error(f"Error loading BLIP model: {str(e)}")
+            logger.error(f"Error initializing processors: {str(e)}")
             raise
 
-    def generate_caption(self, image: Union[Image.Image, str], prompt: Optional[str] = None) -> str:
-        """Generate caption for an image."""
+        # Initialize model
         try:
-            if self.model is None:
-                raise ValueError("Model is not loaded properly")
+            logger.info("Loading captioning model...")
+            self.model = self.load_model()
+            logger.info("Model loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading model: {str(e)}")
+            raise
 
-            # Convert string path to PIL Image if needed
+        # Configure generation settings
+        self.generation_config = {
+            "max_length": self.max_length,
+            "min_length": self.min_length,
+            "num_beams": self.num_beams,
+            "temperature": self.temperature,
+            "no_repeat_ngram_size": self.no_repeat_ngram_size,
+            "do_sample": self.do_sample,
+            "early_stopping": True,
+        }
+
+        logger.info("CaptioningAgent initialized successfully")
+
+    def load_model(self) -> VisionEncoderDecoderModel:
+        """Load and configure the model."""
+        model = VisionEncoderDecoderModel.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16 if torch.cuda.is_available() else torch.float32,
+            low_cpu_mem_usage=True,
+        ).to(self.device)
+        model.eval()
+        return model
+
+    def generate_caption(self, image: Union[Image.Image, str], prompt: Optional[str] = None) -> str:
+        """Generate caption for an image with optional prompt."""
+        try:
+            # Load and verify image
             if isinstance(image, str):
-                logger.debug(f"Loading image from path: {image}")
                 image = self.load_image(image)
             elif not isinstance(image, Image.Image):
                 raise ValueError(f"Unsupported image type: {type(image)}")
 
-            logger.debug("Preparing inputs for caption generation")
-            # Prepare inputs
-            inputs = self.processor(
-                images=image, text=prompt, return_tensors="pt", padding=True
-            ).to(self.device)
+            # Process image
+            inputs = self.image_processor(images=image, return_tensors="pt").to(self.device)
 
-            logger.debug("Generating caption")
-            # Generate caption using the model
+            # Generate caption
             with torch.no_grad():
                 output_ids = self.model.generate(
-                    **inputs,
-                    max_length=self.max_length,
-                    min_length=self.min_length,
-                    num_beams=self.num_beams,
-                    repetition_penalty=1.0,
+                    pixel_values=inputs.pixel_values, **self.generation_config
                 )
 
-            # Decode caption
-            caption = self.processor.decode(output_ids[0], skip_special_tokens=True)
-            logger.info(f"Generated caption: {caption}")
+            caption = self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
+            logger.debug(f"Generated caption: {caption}")
             return caption
 
         except Exception as e:
-            logger.error(f"Error generating caption: {str(e)}", exc_info=True)
+            logger.error(f"Error generating caption: {str(e)}")
             raise
 
     def process(self, vision_input: VisionInput) -> VisionOutput:
@@ -89,85 +106,93 @@ class BlipCaptioningAgent(BaseVisionAgent):
         start_time = time.time()
 
         try:
-            # Generate caption
             caption = self.generate_caption(
                 image=vision_input.image, prompt=vision_input.user_comment
             )
 
-            # Create output
             processing_time = time.time() - start_time
-            output = VisionOutput(
+
+            return VisionOutput(
                 task_type=VisionTaskType.IMAGE_CAPTIONING,
                 results={
                     "caption": caption,
                     "model_config": {
-                        "max_length": self.max_length,
-                        "min_length": self.min_length,
-                        "num_beams": self.num_beams,
+                        "model_name": self.model_name,
+                        "generation_config": self.generation_config,
                     },
                 },
                 confidence=1.0,
                 processing_time=processing_time,
             )
 
-            logger.info(f"Caption generated in {processing_time:.2f} seconds")
-            return output
-
         except Exception as e:
-            logger.error(f"Error in caption processing: {str(e)}", exc_info=True)
+            logger.error(f"Error in caption processing: {str(e)}")
             raise
 
     def process_batch(
         self, image_paths: List[str], batch_size: Optional[int] = None, prompt: Optional[str] = None
     ) -> List[Dict[str, str]]:
-        """Process a batch of images and generate captions."""
+        """Process a batch of images with memory-efficient batching."""
         if not image_paths:
             return []
 
-        batch_size = batch_size or self.batch_size
+        batch_size = batch_size or min(4, len(image_paths))
         results = []
-        logger.info(f"Processing batch of {len(image_paths)} images")
 
         try:
             for i in range(0, len(image_paths), batch_size):
                 batch = image_paths[i : i + batch_size]
-                logger.debug(f"Processing batch {i//batch_size + 1}")
 
+                # Process images with error handling
                 batch_images = []
+                valid_paths = []
                 for path in batch:
                     try:
                         batch_images.append(self.load_image(path))
-                    except FileNotFoundError as e:
-                        logger.error(e)
+                        valid_paths.append(path)
+                    except Exception as e:
+                        logger.error(f"Error loading image {path}: {str(e)}")
                         continue
 
-                # Process batch
-                inputs = self.processor(
-                    images=batch_images,
-                    text=[prompt] * len(batch) if prompt else None,
-                    return_tensors="pt",
-                    padding=True,
-                ).to(self.device)
+                if not batch_images:
+                    continue
+
+                # Generate captions
+                inputs = self.image_processor(batch_images, return_tensors="pt").to(self.device)
 
                 with torch.no_grad():
                     output_ids = self.model.generate(
-                        **inputs,
-                        max_length=self.max_length,
-                        min_length=self.min_length,
-                        num_beams=self.num_beams,
-                        repetition_penalty=1.0,
+                        pixel_values=inputs.pixel_values, **self.generation_config
                     )
 
-                captions = self.processor.batch_decode(output_ids, skip_special_tokens=True)
+                captions = self.tokenizer.batch_decode(output_ids, skip_special_tokens=True)
 
-                # Store results
                 results.extend(
-                    [{"path": path, "caption": caption} for path, caption in zip(batch, captions)]
+                    [
+                        {"path": path, "caption": caption}
+                        for path, caption in zip(valid_paths, captions)
+                    ]
                 )
 
-            logger.info(f"Successfully processed {len(results)} images")
+                # Clear memory after each batch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
             return results
 
         except Exception as e:
-            logger.error(f"Error processing batch: {str(e)}", exc_info=True)
+            logger.error(f"Error in batch processing: {str(e)}")
             raise
+
+    def clear_memory(self):
+        """Clear GPU memory if available."""
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+            logger.info("Cleared GPU memory cache")
+
+    @staticmethod
+    def get_memory_usage() -> float:
+        """Get current GPU memory usage in MB."""
+        if torch.cuda.is_available():
+            return torch.cuda.memory_allocated() / 1024**2
+        return 0.0

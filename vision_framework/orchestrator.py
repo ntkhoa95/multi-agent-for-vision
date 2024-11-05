@@ -1,12 +1,14 @@
 import logging
+import os
 import time
+from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 import cv2
 import numpy as np
 from PIL import Image
 
-from .agents.captioning import BlipCaptioningAgent
+from .agents.captioning import CaptioningAgent
 from .agents.classification import MobileNetClassificationAgent
 from .agents.detection import YOLODetectionAgent
 from .core.config import validate_config
@@ -50,7 +52,7 @@ class VisionOrchestrator:
         # Captioning agent (only if enabled)
         if self.enable_captioning:
             try:
-                captioning_agent = BlipCaptioningAgent(self.config)
+                captioning_agent = CaptioningAgent(self.config)
                 self.router.register_agent(VisionTaskType.IMAGE_CAPTIONING, captioning_agent)
                 logger.info("Registered agent for task type: IMAGE_CAPTIONING")
             except Exception as e:
@@ -66,8 +68,49 @@ class VisionOrchestrator:
             det for det in detections if det["class"].lower() in map(str.lower, allowed_classes)
         ]
 
+    # def visualize_detections(
+    #     self, image_path: str, detections: List[Dict], output_path: Optional[str] = None
+    # ) -> bool:
+    #     """Visualize detections on the image and optionally save to output_path."""
+    #     try:
+    #         image = cv2.imread(image_path)
+    #         if image is None:
+    #             logger.error(f"Failed to read image: {image_path}")
+    #             return False
+
+    #         for detection in detections:
+    #             if "bbox" not in detection:
+    #                 continue
+
+    #             x1, y1, x2, y2 = detection["bbox"]
+    #             label = detection["class"]
+    #             confidence = detection.get("confidence", 0)
+
+    #             cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+    #             cv2.putText(
+    #                 image,
+    #                 f"{label}: {confidence:.2f}",
+    #                 (int(x1), int(y1) - 10),
+    #                 cv2.FONT_HERSHEY_SIMPLEX,
+    #                 0.5,
+    #                 (255, 255, 255),
+    #                 2,
+    #             )
+
+    #         if output_path:
+    #             cv2.imwrite(output_path, image)
+
+    #         return True
+    #     except Exception as e:
+    #         logger.error(f"Error visualizing detections: {str(e)}")
+    #         return False
+
     def visualize_detections(
-        self, image_path: str, detections: List[Dict], output_path: Optional[str] = None
+        self,
+        image_path: str,
+        detections: List[Dict],
+        output_path: Optional[str] = None,
+        caption: Optional[str] = None,
     ) -> bool:
         """Visualize detections on the image and optionally save to output_path."""
         try:
@@ -76,6 +119,51 @@ class VisionOrchestrator:
                 logger.error(f"Failed to read image: {image_path}")
                 return False
 
+            img_height, img_width = image.shape[:2]
+
+            # Add caption first if provided
+            if caption:
+                margin = 10
+                font_scale = 0.7
+                thickness = 2
+
+                # Split caption into multiple lines if too long
+                max_width = img_width - 2 * margin
+                words = caption.split()
+                lines = []
+                current_line = words[0]
+
+                for word in words[1:]:
+                    test_line = current_line + " " + word
+                    (test_width, text_height), _ = cv2.getTextSize(
+                        test_line, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness
+                    )
+                    if test_width <= max_width:
+                        current_line = test_line
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                lines.append(current_line)
+
+                # Draw caption background
+                line_height = int(text_height * 1.5)
+                total_height = line_height * len(lines) + 2 * margin
+                cv2.rectangle(image, (0, 0), (img_width, total_height), (0, 0, 0), -1)
+
+                # Draw caption text
+                for i, line in enumerate(lines):
+                    y_position = margin + (i + 1) * line_height
+                    cv2.putText(
+                        image,
+                        line,
+                        (margin, y_position),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        font_scale,
+                        (255, 255, 255),
+                        thickness,
+                    )
+
+            # Draw detections
             for detection in detections:
                 if "bbox" not in detection:
                     continue
@@ -83,12 +171,33 @@ class VisionOrchestrator:
                 x1, y1, x2, y2 = detection["bbox"]
                 label = detection["class"]
                 confidence = detection.get("confidence", 0)
+                track_id = detection.get("track_id", None)
 
+                # Create label text
+                label_text = f"{label}: {confidence:.2f}"
+                if track_id is not None:
+                    label_text += f" ID:{track_id}"
+
+                # Draw bounding box
                 cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 2)
+
+                # Draw label background
+                (text_width, text_height), _ = cv2.getTextSize(
+                    label_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2
+                )
+                cv2.rectangle(
+                    image,
+                    (int(x1), int(y1) - text_height - 10),
+                    (int(x1) + text_width, int(y1)),
+                    (0, 255, 0),
+                    -1,
+                )
+
+                # Draw label text
                 cv2.putText(
                     image,
-                    f"{label}: {confidence:.2f}",
-                    (int(x1), int(y1) - 10),
+                    label_text,
+                    (int(x1), int(y1) - 5),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5,
                     (255, 255, 255),
@@ -96,12 +205,46 @@ class VisionOrchestrator:
                 )
 
             if output_path:
+                output_dir = os.path.dirname(output_path)
+                if output_dir:
+                    os.makedirs(output_dir, exist_ok=True)
                 cv2.imwrite(output_path, image)
 
             return True
+
         except Exception as e:
             logger.error(f"Error visualizing detections: {str(e)}")
             return False
+
+    # def process_image_with_caption(
+    #     self,
+    #     image_path: str,
+    #     user_comment: Optional[str] = None,
+    #     task_type: Optional[VisionTaskType] = None,
+    # ) -> Tuple[VisionOutput, Optional[VisionOutput]]:
+    #     """Process image with detection and generate caption for detected objects."""
+    #     detection_result = self.process_image(
+    #         image_path=image_path,
+    #         user_comment=user_comment or "detect objects",
+    #         task_type=task_type or VisionTaskType.OBJECT_DETECTION,
+    #     )
+
+    #     caption_result = None
+    #     if VisionTaskType.IMAGE_CAPTIONING in self.router.agents:
+    #         try:
+    #             detections = detection_result.results.get("detections", [])
+    #             objects = [f"{d['class']}" for d in detections]
+    #             prompt = f"An image containing {', '.join(objects)}"
+
+    #             caption_result = self.process_image(
+    #                 image_path=image_path,
+    #                 user_comment=prompt,
+    #                 task_type=VisionTaskType.IMAGE_CAPTIONING,
+    #             )
+    #         except Exception as e:
+    #             logger.warning(f"Failed to generate caption: {str(e)}")
+
+    #     return detection_result, caption_result
 
     def process_image_with_caption(
         self,
@@ -128,6 +271,16 @@ class VisionOrchestrator:
                     user_comment=prompt,
                     task_type=VisionTaskType.IMAGE_CAPTIONING,
                 )
+
+                # You could also visualize here if needed
+                output_path = f"results/{Path(image_path).stem}_with_caption.jpg"
+                self.visualize_detections(
+                    image_path=image_path,
+                    detections=detection_result.results["detections"],
+                    output_path=output_path,
+                    caption=caption_result.results.get("caption"),
+                )
+
             except Exception as e:
                 logger.warning(f"Failed to generate caption: {str(e)}")
 

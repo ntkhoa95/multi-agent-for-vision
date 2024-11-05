@@ -477,52 +477,143 @@ class YOLODetectionAgent(BaseVisionAgent):
             total_time=total_time,
         )
 
-    def visualize_detections(
-        self,
-        image: np.ndarray,
-        detections: List[Dict],
-        output_path: Optional[str] = None,
-    ) -> np.ndarray:
-        if isinstance(image, str):
-            annotated_image = cv2.imread(image)
-            # annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
-        else:
-            """Visualize detections on the image."""
-            annotated_image = image.copy()  # Work with a copy of the image
+    # def visualize_detections(
+    #     self,
+    #     image: np.ndarray,
+    #     detections: List[Dict],
+    #     output_path: Optional[str] = None,
+    # ) -> np.ndarray:
+    #     if isinstance(image, str):
+    #         annotated_image = cv2.imread(image)
+    #         # annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_BGR2RGB)
+    #     else:
+    #         """Visualize detections on the image."""
+    #         annotated_image = image.copy()  # Work with a copy of the image
 
-        for det in detections:
-            bbox = det["bbox"]
-            label = f"{det['class']} {det['confidence']:.2f}"
-            if len(bbox) != 4:
-                logger.error(f"Invalid bounding box: {bbox}")
-                continue
-            x1, y1, x2, y2 = map(int, bbox)  # Ensure these are integers
-            cv2.rectangle(annotated_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
-            cv2.putText(
-                annotated_image,
-                label,
-                (x1, y1 - 10),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.5,
-                (0, 255, 0),
-                2,
-            )
-
-        if output_path:
-            cv2.imwrite(output_path, annotated_image)
-
-        return annotated_image
-
-    # def visualize_detections(self, image_path: str, detections: List[Dict],
-    #                        output_path: Optional[str] = None) -> np.ndarray:
-    #     """Visualize detections on the image"""
-    #     image = cv2.imread(image_path)
-    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-    #     annotated_image = draw_detections(image, detections)
+    #     for det in detections:
+    #         bbox = det["bbox"]
+    #         label = f"{det['class']} {det['confidence']:.2f}"
+    #         if len(bbox) != 4:
+    #             logger.error(f"Invalid bounding box: {bbox}")
+    #             continue
+    #         x1, y1, x2, y2 = map(int, bbox)  # Ensure these are integers
+    #         cv2.rectangle(annotated_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+    #         cv2.putText(
+    #             annotated_image,
+    #             label,
+    #             (x1, y1 - 10),
+    #             cv2.FONT_HERSHEY_SIMPLEX,
+    #             0.5,
+    #             (0, 255, 0),
+    #             2,
+    #         )
 
     #     if output_path:
-    #         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    #         cv2.imwrite(output_path, cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR))
+    #         cv2.imwrite(output_path, annotated_image)
 
     #     return annotated_image
+
+    def visualize_detections(
+        self,
+        image: Union[str, np.ndarray],
+        detections: List[Dict],
+        output_path: Optional[str] = None,
+        caption: Optional[str] = None,
+    ) -> np.ndarray:
+        """Visualize detections and caption on the image."""
+        try:
+            # Load image if path is provided
+            if isinstance(image, str):
+                annotated_image = cv2.imread(image)
+            else:
+                annotated_image = image.copy()
+
+            # Draw detections
+            for det in detections:
+                bbox = det["bbox"]
+                if len(bbox) != 4:
+                    logger.error(f"Invalid bounding box: {bbox}")
+                    continue
+
+                x1, y1, x2, y2 = map(int, bbox)
+                label = f"{det['class']} {det['confidence']:.2f}"
+                if "track_id" in det:
+                    label += f" ID:{det['track_id']}"
+
+                # Draw bounding box
+                cv2.rectangle(annotated_image, (x1, y1), (x2, y2), (0, 255, 0), 2)
+
+                # Draw label with background
+                (text_width, text_height), _ = cv2.getTextSize(
+                    label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2
+                )
+                cv2.rectangle(
+                    annotated_image,
+                    (x1, y1 - text_height - 10),
+                    (x1 + text_width, y1),
+                    (0, 255, 0),
+                    -1,
+                )
+                cv2.putText(
+                    annotated_image,
+                    label,
+                    (x1, y1 - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    2,
+                )
+
+            # Add caption at the top of the image if provided
+            if caption:
+                # Calculate position for caption
+                img_height, img_width = annotated_image.shape[:2]
+                margin = 10
+                font_scale = 0.7
+                thickness = 2
+
+                # Split caption into multiple lines if too long
+                max_width = img_width - 2 * margin
+                words = caption.split()
+                lines = []
+                current_line = words[0]
+
+                for word in words[1:]:
+                    test_line = current_line + " " + word
+                    (test_width, _), _ = cv2.getTextSize(
+                        test_line, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness
+                    )
+                    if test_width <= max_width:
+                        current_line = test_line
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                lines.append(current_line)
+
+                # Draw caption background
+                line_height = int(text_height * 1.5)
+                total_height = line_height * len(lines) + 2 * margin
+                cv2.rectangle(annotated_image, (0, 0), (img_width, total_height), (0, 0, 0), -1)
+
+                # Draw caption text
+                for i, line in enumerate(lines):
+                    y_position = margin + (i + 1) * line_height
+                    cv2.putText(
+                        annotated_image,
+                        line,
+                        (margin, y_position),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        font_scale,
+                        (255, 255, 255),
+                        thickness,
+                    )
+
+            if output_path:
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                cv2.imwrite(output_path, annotated_image)
+
+            return annotated_image
+
+        except Exception as e:
+            logger.error(f"Error visualizing detections: {str(e)}")
+            raise
