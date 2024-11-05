@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
-from vision_framework import VisionOrchestrator, VisionTaskType
+from vision_framework import VisionInput, VisionOrchestrator, VisionTaskType
 
 
 def download_test_video():
@@ -58,69 +58,186 @@ def process_video_with_caption(
     output_path: str,
     target_classes: list = None,
     process_duration: float = None,
-    caption_interval: int = 30,  # Generate caption every N frames
+    caption_interval: int = 30,
 ):
-    """Process video with detection and periodic captioning."""
+    """Process video with detection and frame-by-frame captioning."""
     try:
+        import PIL.Image as Image
+
         # Create output directory
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-        # Process video with detection
         logger.info("Processing video with detection and tracking...")
         query = f"detect {' and '.join(target_classes)}" if target_classes else "detect all objects"
 
-        video_result, frame_captions = orchestrator.process_video(
+        # First pass: Get detections
+        video_result, _ = orchestrator.process_video(
             video_path=video_path,
-            output_path=output_path,
+            output_path=None,
             user_comment=query,
             start_time=0,
             end_time=process_duration,
         )
 
-        # Print statistics
-        logger.info("\nProcessing Results:")
-        logger.info(f"  Processed frames: {video_result.num_frames}")
-        logger.info(f"  Average FPS: {video_result.num_frames / video_result.total_time:.2f}")
+        # Open the video file
+        cap = cv2.VideoCapture(video_path)
+        if not cap.isOpened():
+            raise ValueError(f"Cannot open video file: {video_path}")
 
-        # Calculate detection statistics
-        total_detections = 0
-        all_classes = set()
-        tracked_objects = set()
+        # Get video properties
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        for frame_idx, frame in enumerate(video_result.frames_results):
-            detections = frame.results["detections"]
-            total_detections += len(detections)
+        # Create video writer
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
-            # Update statistics
+        frame_idx = 0
+        current_caption = ""
+
+        logger.info("Processing frames with captions...")
+
+        # Get captioning agent
+        captioning_agent = orchestrator.router.agents.get(VisionTaskType.IMAGE_CAPTIONING)
+
+        for frame_result in tqdm(video_result.frames_results, desc="Processing frames"):
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            # Generate new caption periodically
+            if frame_idx % caption_interval == 0:
+                try:
+                    # Convert frame to PIL Image
+                    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    pil_image = Image.fromarray(frame_rgb)
+
+                    # Get detections for current frame
+                    detections = frame_result.results["detections"]
+                    if target_classes:
+                        detections = [
+                            det
+                            for det in detections
+                            if det["class"].lower() in [cls.lower() for cls in target_classes]
+                        ]
+
+                    # Create prompt from detections
+                    objects = [f"{d['class']}" for d in detections]
+                    if objects:
+                        prompt = f"A scene containing {', '.join(objects)}"
+                    else:
+                        prompt = "Describe this scene"
+
+                    # Generate caption
+                    vision_input = VisionInput(
+                        image=pil_image,
+                        user_comment=prompt,
+                        task_type=VisionTaskType.IMAGE_CAPTIONING,
+                    )
+                    caption_output = captioning_agent.process(vision_input)
+                    current_caption = caption_output.results.get("caption", "")
+                    logger.debug(f"Frame {frame_idx} caption: {current_caption}")
+                except Exception as e:
+                    logger.warning(f"Failed to generate caption for frame {frame_idx}: {str(e)}")
+
+            # Draw detections
+            detections = frame_result.results["detections"]
+            if target_classes:
+                detections = [
+                    det
+                    for det in detections
+                    if det["class"].lower() in [cls.lower() for cls in target_classes]
+                ]
+
+            # Draw bounding boxes
             for det in detections:
-                all_classes.add(det["class"])
+                bbox = det["bbox"]
+                x1, y1, x2, y2 = map(int, bbox)
+                label = f"{det['class']} {det['confidence']:.2f}"
                 if "track_id" in det:
-                    tracked_objects.add((det["class"], det["track_id"]))
+                    label += f" ID:{det['track_id']}"
 
-            # Generate caption for periodic frames
-            if frame_idx % caption_interval == 0 and frame_captions:
-                caption = frame_captions[frame_idx].results.get("caption")
-                if caption:
-                    logger.info(f"\nFrame {frame_idx} Caption:")
-                    logger.info(caption)
+                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
 
-        avg_detections = total_detections / video_result.num_frames
-        logger.info(f"\nDetection Statistics:")
-        logger.info(f"  Total detections: {total_detections}")
-        logger.info(f"  Average detections per frame: {avg_detections:.2f}")
-        logger.info(f"  Detected classes: {sorted(list(all_classes))}")
+                # Draw label background
+                (text_width, text_height), _ = cv2.getTextSize(
+                    label, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2
+                )
+                cv2.rectangle(
+                    frame,
+                    (x1, y1 - text_height - 10),
+                    (x1 + text_width, y1),
+                    (0, 255, 0),
+                    -1,
+                )
 
-        if tracked_objects:
-            logger.info(f"\nTracking Statistics:")
-            logger.info(f"  Unique tracked objects: {len(tracked_objects)}")
-            class_counts = {}
-            for obj_class, _ in tracked_objects:
-                class_counts[obj_class] = class_counts.get(obj_class, 0) + 1
-            for obj_class, count in class_counts.items():
-                logger.info(f"    {obj_class}: {count} instances")
+                cv2.putText(
+                    frame,
+                    label,
+                    (x1, y1 - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    (255, 255, 255),
+                    2,
+                )
 
-        logger.info(f"\nOutput saved to: {output_path}")
-        return video_result, frame_captions
+            # Add caption to frame
+            if current_caption:
+                # Calculate position for caption
+                margin = 10
+                font_scale = 0.7
+                thickness = 2
+
+                # Split caption into multiple lines
+                words = current_caption.split()
+                lines = []
+                current_line = words[0]
+                max_width = width - 2 * margin
+
+                for word in words[1:]:
+                    test_line = current_line + " " + word
+                    (test_width, text_height), _ = cv2.getTextSize(
+                        test_line, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness
+                    )
+                    if test_width <= max_width:
+                        current_line = test_line
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                lines.append(current_line)
+
+                # Draw caption background
+                line_height = int(text_height * 1.5)
+                total_height = line_height * len(lines) + 2 * margin
+                cv2.rectangle(frame, (0, 0), (width, total_height), (0, 0, 0), -1)
+
+                # Draw caption text
+                for i, line in enumerate(lines):
+                    y_position = margin + (i + 1) * line_height
+                    cv2.putText(
+                        frame,
+                        line,
+                        (margin, y_position),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        font_scale,
+                        (255, 255, 255),
+                        thickness,
+                    )
+
+            # Write the frame
+            out.write(frame)
+            frame_idx += 1
+
+        # Release resources
+        cap.release()
+        out.release()
+
+        # Print statistics
+        logger.info(f"\nProcessed {frame_idx} frames")
+        logger.info(f"Output saved to: {output_path}")
+
+        return video_result, None
 
     except Exception as e:
         logger.error(f"Error processing video: {str(e)}")
