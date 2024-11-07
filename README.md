@@ -1,12 +1,9 @@
 # Vision Framework: Multi-Agent System for Computer Vision Tasks
 
-<div align="center">
+<div>
+<div>
 
-[![CI](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision/branch/main/graph/badge.svg)](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision)
-<div align="center">
 
-[![CI](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml/badge.svg)](https://github.com/ntkhoa95/multi-agent-for-vision/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision/branch/main/graph/badge.svg)](https://codecov.io/gh/ntkhoa95/multi-agent-for-vision)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -116,7 +113,7 @@ The Vision Framework includes a user-friendly web interface built with Gradio:
 python examples/gradio_demo.py
 ```
 
-<div align="center">
+<div>
 <img src="docs/demo-app-gradio.png" alt="Demo Application Interface" width="800"/>
 </div>
 
@@ -136,7 +133,7 @@ The Vision Framework includes a user-friendly web interface built with Gradio:
 python examples/gradio_demo.py
 ```
 
-<div align="center">
+<div>
 <img src="docs/demo-app-gradio.png" alt="Demo Application Interface" width="800"/>
 </div>
 
@@ -211,28 +208,83 @@ python examples/video_processing_example.py
 
 ## 💻 Basic Usage
 
-```python
-from vision_framework import VisionOrchestrator
-from vision_framework.core.types import VisionTaskType
+### Using the Gradio Interface
 
-# Initialize the framework
+Run the demo application:
+```bash
+python app/gradio_demo.py
+```
+
+This launches a web interface where you can:
+- Upload images
+- Select vision tasks
+- Enter natural language queries
+- View results with visualizations
+
+### Programmatic Usage
+
+#### Image Classification
+```python
+from vision_framework import VisionOrchestrator, VisionTaskType
+
+# Initialize orchestrator
 config = {
-    'DEVICE': 'cuda',  # or 'cpu'
-    'MODEL_NAME': 'mobilenetv3_large_100',
-    'MODEL_PRETRAINED': True
+    "MODEL_NAME": "mobilenetv3_large_100",
+    "MODEL_PRETRAINED": True
 }
 orchestrator = VisionOrchestrator(config)
 
-# Process an image
+# Process image
 result = orchestrator.process_image(
     image_path="path/to/image.jpg",
-    user_comment="What is in this image?"
+    task_type=VisionTaskType.IMAGE_CLASSIFICATION,
+    user_comment="classify this image"
 )
+```
 
-# Print results
-print(f"Task Type: {result.task_type}")
-print(f"Confidence: {result.confidence}")
-print("Predictions:", result.results)
+#### Object Detection
+```python
+# Configure detection
+config = {
+    "YOLO_MODEL_NAME": "yolov8s.pt",
+    "YOLO_CONFIDENCE_THRESHOLD": 0.25,
+    "ENABLE_TRACK": True
+}
+orchestrator = VisionOrchestrator(config)
+
+# Detect objects
+result = orchestrator.process_image(
+    image_path="path/to/image.jpg",
+    task_type=VisionTaskType.OBJECT_DETECTION,
+    user_comment="detect people and cars"
+)
+```
+
+#### Image Captioning
+```python
+# Enable captioning
+config = {
+    "ENABLE_CAPTIONING": True,
+    "MAX_CAPTION_LENGTH": 50
+}
+orchestrator = VisionOrchestrator(config)
+
+# Generate caption
+result = orchestrator.process_image(
+    image_path="path/to/image.jpg",
+    task_type=VisionTaskType.IMAGE_CAPTIONING,
+    user_comment="describe this image"
+)
+```
+
+#### Video Processing
+```python
+# Process video with tracking
+result = orchestrator.process_video(
+    video_path="path/to/video.mp4",
+    output_path="output.mp4",
+    user_comment="track vehicles"
+)
 ```
 
 ## 🏗️ Architecture
@@ -241,37 +293,54 @@ print("Predictions:", result.results)
 <summary>Project Structure</summary>
 
 ```
-vision_framework/
-├── setup.py                # Package setup and dependencies
-├── requirements.txt        # Project dependencies
-├── README.md              # Project documentation
-├── LICENSE                # License file
-├── .gitignore            # Git ignore file
-├── README.md              # Project documentation
-├── LICENSE                # License file
-├── .gitignore            # Git ignore file
-│
-├── vision_framework/      # Main package directory
-│   ├── __init__.py        # Package initialization
-│   ├── config.py          # Configuration management
-│   ├── orchestrator.py    # Vision Orchestrator management
-├── vision_framework/      # Main package directory
-│   ├── __init__.py        # Package initialization
-│   ├── config.py          # Configuration management
-│   ├── orchestrator.py    # Vision Orchestrator management
-│   │
-│   ├── core/              # Core functionality
-│   ├── agents/            # Vision agents
-│   ├── nlp/               # NLP processing
-│   ├── router/            # Request routing
-│   └── utils/             # Utility functions
-│
-├── tests/                 # Test directory
-│   ├── unit/              # Unit tests
-│   ├── integration/       # Integration tests
-│   └── data/              # Test data
-│
-└── examples/             # Example scripts
+multi-agents/
+├── app/
+│   └── gradio_demo.py           # Interactive web interface
+├── docs/
+│   └── images/                  # Documentation images
+├── examples/
+│   ├── classification_example.py # Image classification demo
+│   ├── detection_example.py     # Object detection demo
+│   ├── video_processing_example.py  # Video analysis demo
+│   ├── vision_captioning_example.py # Image captioning demo
+│   └── video_vision_captioning_example.py
+├── tests/
+│   ├── data/
+│   │   ├── images/             # Test images
+│   │   └── videos/             # Test videos
+│   ├── integration/
+│   │   ├── test_image.py       # Image processing tests
+│   │   └── test_video.py       # Video processing tests
+│   └── unit/
+│       ├── test_base.py        # Base agent tests
+│       ├── test_classification.py
+│       ├── test_detection.py
+│       ├── test_nlp.py
+│       ├── test_orchestrator.py
+│       └── test_router.py
+├── vision_framework/
+│   ├── agents/
+│   │   ├── base.py            # Base agent class
+│   │   ├── classification.py  # MobileNet classifier
+│   │   ├── detection.py      # YOLO detector
+│   │   └── captioning.py     # VIT-GPT2 captioner
+│   ├── core/
+│   │   ├── config.py         # Configuration management
+│   │   └── types.py          # Type definitions
+│   ├── nlp/
+│   │   └── processor.py      # Query processing
+│   ├── router/
+│   │   └── router.py         # Task routing
+│   ├── utils/
+│   │   ├── image.py          # Image utilities
+│   │   ├── logging.py        # Logging setup
+│   │   └── video.py          # Video utilities
+│   └── orchestrator.py       # Main orchestrator
+├── requirements.txt          # Production dependencies
+├── requirements-dev.txt      # Development dependencies
+├── setup.py                 # Package setup
+├── pytest.ini              # Test configuration
+└── README.md               # This file
 ```
 </details>
 
@@ -280,7 +349,7 @@ vision_framework/
 ```mermaid
 flowchart TB
     subgraph Input
-        A[Image] --> C{VisionInput}
+        A[Image/Video] --> C{VisionInput}
         B[User Comment] --> C
         P[Additional Params] -.-> C
     end
@@ -288,39 +357,36 @@ flowchart TB
     subgraph Orchestrator
         C --> D[VisionOrchestrator]
         D --> E[AgentRouter]
+        D --> NLP[NLP Processor]
 
         subgraph Router Logic
             E --> F{Task Type\nSpecified?}
             F -->|Yes| H[Get Registered Agent]
-            F -->|No| G[Analyze Comment\nKeywords]
+            F -->|No| G[Parse Query\nIntent]
+            NLP --> G
             G --> H
         end
     end
 
     subgraph Agents
         H --> I{Select Agent}
-        I -->|Object Detection| J[Object Detection\nAgent]
-        I -->|Classification| K[Classification\nAgent]
-        I -->|Segmentation| L[Segmentation\nAgent]
-        I -->|OCR| M[OCR Agent]
-        I -->|Face Detection| N[Face Detection\nAgent]
+        I -->|Object Detection| J[YOLO Detection\nAgent  ByteTrack]
+        I -->|Classification| K[MobileNet\nClassification Agent]
+        I -->|Captioning| L[VIT-GPT2\nCaptioning Agent]
     end
 
     subgraph Processing
-        J --> O[Process Image]
+        J --> O[Process Input]
         K --> O
         L --> O
-        M --> O
-        N --> O
-        O --> Q[Create VisionOutput]
+        O --> V{Input Type}
+        V -->|Image| Q1[Process Image]
+        V -->|Video| Q2[Process Video]
+        Q1 --> R[Create VisionOutput]
+        Q2 --> R
     end
 
-    Q --> R[Return Results]
-
-    style Input fill:#e1f5fe
-    style Orchestrator fill:#fff3e0
-    style Agents fill:#f3e5f5
-    style Processing fill:#e8f5e9
+    R --> S[Return Results]
 ```
 
 ### Core Components
@@ -332,22 +398,44 @@ flowchart TB
 
 ## ⚙️ Configuration
 
-<details>
-<summary>Configuration Options</summary>
-
+### General Settings
 ```python
 config = {
-    'DEVICE': 'cuda',                    # Device for inference
-    'MODEL_NAME': 'mobilenetv3_large_100', # Classification model
-    'MODEL_PRETRAINED': True,            # Use pretrained weights
-    'BATCH_SIZE': 1,                     # Batch size for inference
-    'NUM_WORKERS': 0,                    # Workers for data loading
-    'YOLO_MODEL_NAME': 'yolov8s.pt',     # Detection model
-    'YOLO_CONFIDENCE_THRESHOLD': 0.25,    # Detection confidence
-    'YOLO_IOU_THRESHOLD': 0.45,          # Detection IOU threshold
+    "DEVICE": "cuda",  # or "cpu"
+    "BATCH_SIZE": 32,
+    "NUM_WORKERS": 4
 }
 ```
-</details>
+
+### Classification Settings
+```python
+config = {
+    "MODEL_NAME": "mobilenetv3_large_100",
+    "MODEL_PRETRAINED": True
+}
+```
+
+### Detection Settings
+```python
+config = {
+    "YOLO_MODEL_NAME": "yolov8s.pt",
+    "YOLO_CONFIDENCE_THRESHOLD": 0.25,
+    "YOLO_IOU_THRESHOLD": 0.45,
+    "DETECTION_IMAGE_SIZE": 640,
+    "ENABLE_TRACK": True
+}
+```
+
+### Captioning Settings
+```python
+config = {
+    "ENABLE_CAPTIONING": True,
+    "MAX_CAPTION_LENGTH": 50,
+    "MIN_CAPTION_LENGTH": 5,
+    "NUM_BEAMS": 3,
+    "TEMPERATURE": 1.0
+}
+```
 
 ## 📊 Supported Tasks
 
@@ -420,7 +508,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📧 Contact
 
-<div align="center">
+<div>
 
 **Khoa Nguyen**
 
