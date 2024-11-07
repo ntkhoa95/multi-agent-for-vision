@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 class MobileNetClassificationAgent(BaseVisionAgent):
     def __init__(self, config: dict):
         super().__init__(config)
+        self.model = self.load_model()
         self.setup_transforms()
         self.load_imagenet_labels()
 
